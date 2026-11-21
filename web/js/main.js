@@ -87,7 +87,23 @@ async function boot() {
   window.__sbReady = performance.now();
   $("loader").classList.add("done");
   setTimeout(() => { $("loader").hidden = true; }, 500);
+  welcome();
   if (!map.isOnline()) toast("İnternet yok: altlık harita kapalı, simülasyon verisi tam.");
+}
+
+// İlk açılışta kısa karşılama; ?story=1 ile doğrudan sunum modu
+function welcome() {
+  const p = new URLSearchParams(location.search);
+  if (p.get("story")) { story.start(); return; }
+  let seen = false;
+  try { seen = localStorage.getItem("sb-welcome") === "1"; } catch { /* özel pencere */ }
+  if (seen) return;
+  const box = $("welcome");
+  const close = () => { box.hidden = true; try { localStorage.setItem("sb-welcome", "1"); } catch { /* yok */ } };
+  $("wl-close").addEventListener("click", close);
+  $("wl-story").addEventListener("click", () => { close(); story.start(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !box.hidden) close(); });
+  box.hidden = false;
 }
 
 // --- Görünüm değişimi ----------------------------------------------------------

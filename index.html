@@ -1,13 +1,330 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sanal Baraj · AQUAİST</title>
-  <meta http-equiv="refresh" content="0; url=web/?d=bayrampasa&m=normal&s=on&h=8">
-  <link rel="canonical" href="web/">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sanal Baraj · AQUAİST</title>
+<meta name="description" content="Apartman depolarını ve hidroforları yapay zekâyla tek bir akıllı rezervuar gibi yöneten dijital ikiz. Water AI Hackathon 2026, Takım AQUAİST.">
+<meta property="og:title" content="Sanal Baraj · AQUAİST">
+<meta property="og:description" content="Şehrin bodrumlarında zaten bir baraj var. Biz onu yönetilebilir yaptık.">
+<meta property="og:image" content="assets/og.jpg">
+<meta name="theme-color" content="#0A161D">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M20 5h5l3 22h-8z' fill='%23586A70'/%3E%3Cpath d='M3 27h17V12C14 12 8 19 3 27z' fill='%2342B9DD'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="web/vendor/fonts/fonts.css">
+<style>
+:root {
+  --bg: #0A161D; --bg-2: #0E1F28; --card: #112733; --line: rgba(232,241,243,.10); --line-2: rgba(232,241,243,.2);
+  --ink: #E8F1F3; --ink-2: #A3B6BD; --ink-3: #6F8790;
+  --water: #42B9DD; --water-soft: rgba(66,185,221,.13); --ochre: #EBA43C; --alarm: #F2765F; --good: #5CD19E;
+  --f-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --max: 1200px; --pad: clamp(16px, 4vw, 40px);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--water); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 800; letter-spacing: -.01em; margin: 0; line-height: 1.05; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+.eyebrow { font: 600 13px/1 var(--f-body); letter-spacing: .16em; text-transform: uppercase; color: var(--water); margin: 0 0 16px; }
+.eyebrow.o { color: var(--ochre); }
+.lead { font-size: clamp(18px, 1.6vw, 21px); color: var(--ink-2); max-width: 46rem; }
+.small { font-size: 14px; color: var(--ink-3); }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px; font: 600 16px/1 var(--f-body); text-decoration: none; transition: transform .15s ease, background .15s ease; }
+.btn:hover { transform: translateY(-1px); }
+.btn-p { background: var(--water); color: #04202B; }
+.btn-p:hover { background: #63C9E8; }
+.btn-g { border: 1px solid var(--line-2); color: var(--ink); }
+.btn-g:hover { background: rgba(232,241,243,.06); }
+.btn svg { width: 16px; height: 16px; fill: currentColor; }
+.num { font-family: var(--f-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* üst çubuk */
+.nav { position: fixed; inset: 0 0 auto; z-index: 10; backdrop-filter: blur(14px); background: rgba(10,22,29,.72); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font: 800 19px var(--f-display); }
+.brand svg { width: 26px; height: 26px; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; }
+.nav-links a { color: var(--ink-2); text-decoration: none; font-size: 15px; }
+.nav-links a:hover { color: var(--ink); }
+.nav .btn { padding: 10px 16px; font-size: 14px; }
+@media (max-width: 900px) { .nav-links { display: none; } .nav .btn { margin-left: auto; } }
+
+/* kahraman */
+.hero { position: relative; min-height: 100svh; display: flex; align-items: center; padding: 110px 0 60px; overflow: hidden; }
+.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,12,18,.96) 0%, rgba(5,12,18,.82) 38%, rgba(5,12,18,0) 70%), linear-gradient(0deg, var(--bg) 0%, rgba(10,22,29,0) 25%); }
+.hero .wrap { position: relative; z-index: 1; width: 100%; }
+.hero h1 { font-size: clamp(56px, 9vw, 120px); }
+.hero .tag { font: 600 clamp(22px, 2.6vw, 32px)/1.25 var(--f-body); color: var(--ink); max-width: 36rem; margin: 22px 0 14px; }
+.hero .lead { max-width: 34rem; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+@media (max-width: 700px) {
+  .hero { align-items: flex-end; }
+  .hero-img { object-position: 78% 30%; }
+  .hero::after { background: linear-gradient(0deg, var(--bg) 0%, rgba(10,22,29,.92) 45%, rgba(10,22,29,.25) 100%); }
+}
+
+/* göstergeler */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-top: -10px; position: relative; z-index: 2; }
+.kpi { background: var(--bg-2); padding: 26px 24px; }
+.kpi .num { font-size: clamp(34px, 4vw, 48px); color: var(--water); line-height: 1; }
+.kpi p { margin: 10px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.4; }
+@media (max-width: 900px) { .kpis { grid-template-columns: 1fr 1fr; } }
+
+/* bölümler */
+section.s { padding: clamp(72px, 10vw, 130px) 0 0; }
+.s h2 { font-size: clamp(34px, 4.6vw, 58px); max-width: 52rem; }
+.s .lead { margin: 18px 0 0; }
+.split { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; margin-top: 44px; }
+.split.rev { grid-template-columns: 1fr 1.35fr; }
+.split.rev .media { order: 2; }
+@media (max-width: 900px) { .split, .split.rev { grid-template-columns: 1fr; } .split.rev .media { order: 0; } }
+.media { border-radius: 18px; overflow: hidden; border: 1px solid var(--line); background: #08131A; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 22px; counter-reset: st; }
+.steps li { position: relative; padding-left: 58px; }
+.steps li::before { counter-increment: st; content: counter(st); position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--water-soft); color: var(--water); font: 800 18px var(--f-display); }
+.steps h3 { font-size: 22px; margin-bottom: 4px; }
+.steps p { margin: 0; color: var(--ink-2); }
+
+/* günler */
+.days { display: grid; gap: clamp(48px, 7vw, 90px); margin-top: 52px; }
+.day .label { font: 600 13px var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
+.day h3 { font-size: clamp(26px, 3vw, 38px); margin: 10px 0 14px; }
+.day p { color: var(--ink-2); margin: 0; }
+.compare { display: flex; gap: 14px; margin-top: 22px; flex-wrap: wrap; }
+.compare div { flex: 1 1 140px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.compare .num { font-size: 30px; line-height: 1; }
+.compare .bad .num { color: var(--alarm); }
+.compare .ok .num { color: var(--water); }
+.compare span { display: block; font-size: 14px; color: var(--ink-3); margin-top: 8px; line-height: 1.35; }
+
+/* yeni fikirler */
+.ideas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; }
+.idea { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; }
+.idea img { aspect-ratio: 16/10; object-fit: cover; }
+.idea div { padding: 22px 24px 26px; }
+.idea h3 { font-size: 24px; margin: 6px 0 10px; }
+.idea p { margin: 0; color: var(--ink-2); font-size: 16px; }
+.idea .num { color: var(--ochre); font-size: 30px; display: block; margin-top: 14px; }
+@media (max-width: 900px) { .ideas { grid-template-columns: 1fr; } }
+
+/* kit */
+.kit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 44px; }
+@media (max-width: 900px) { .kit-grid { grid-template-columns: 1fr; } }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.chip { border: 1px solid var(--line-2); border-radius: 999px; padding: 8px 14px; font-size: 14px; color: var(--ink-2); }
+
+/* çağrı bandı */
+.band { margin-top: clamp(72px, 10vw, 130px); background: linear-gradient(120deg, #0E2B39, #0A161D 60%); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.band .wrap { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding-top: 56px; padding-bottom: 56px; flex-wrap: wrap; }
+.band h2 { font-size: clamp(30px, 3.6vw, 44px); }
+
+/* takım */
+.team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 44px; }
+.person { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; }
+.av { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font: 800 24px var(--f-display); color: #fff; margin-bottom: 16px; }
+.person .role { font: 600 12px var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--water); }
+.person h3 { font-size: 21px; margin: 6px 0 8px; }
+.person p { margin: 0; color: var(--ink-2); font-size: 15px; }
+@media (max-width: 900px) { .team { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .team { grid-template-columns: 1fr; } }
+
+footer { padding: 56px 0 70px; color: var(--ink-3); font-size: 14px; }
+footer .wrap { display: grid; gap: 10px; }
+footer a { color: var(--ink-2); }
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+</style>
 </head>
-<body style="font-family:system-ui;background:#0A161D;color:#E8F1F3;display:grid;place-items:center;height:100vh;margin:0">
-  <p>Sanal Baraj dijital ikizi açılıyor… <a style="color:#42B9DD" href="web/?d=bayrampasa&m=normal&s=on&h=8">Açılmazsa tıklayın</a></p>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M20 5h5l3 22h-8z" fill="#586A70"/><path d="M3 27h17V12C14 12 8 19 3 27z" fill="#42B9DD"/><path d="M5 22c3-2 6-2 9 0s4 1.4 6 .6" stroke="#E8F1F3" stroke-width="1.6" fill="none"/></svg>Sanal Baraj</a>
+    <nav class="nav-links" aria-label="Bölümler">
+      <a href="#nasil">Nasıl çalışır</a><a href="#sonuc">Sonuçlar</a><a href="#fikir">Yeni fikirler</a><a href="#kit">Kit</a><a href="#takim">Takım</a>
+    </nav>
+    <a class="btn btn-p" href="web/?d=bayrampasa&amp;m=normal&amp;s=on&amp;h=8">Dijital ikizi aç</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <img class="hero-img" src="assets/diorama.jpg" alt="Bayrampaşa'nın 3B dioraması: bodrumunda depo olan binalar mavi parlıyor, ilçenin altında sanal barajı simgeleyen mavi katman" fetchpriority="high">
+    <div class="wrap">
+      <p class="eyebrow">Water AI Hackathon 2026 · Takım AQUAİST</p>
+      <h1>Sanal Baraj</h1>
+      <p class="tag">Şehrin bodrumlarında zaten bir baraj var. Biz onu yönetilebilir yaptık.</p>
+      <p class="lead">Binlerce apartman deposu ve hidrofor bugün dağınık ve habersiz çalışıyor. Küçük bir kit ve bir dijital ikizle hepsi tek bir akıllı rezervuar gibi, şebekenin yararına birlikte çalışır.</p>
+      <div class="cta">
+        <a class="btn btn-p" href="web/?d=bayrampasa&amp;m=normal&amp;s=on&amp;h=8"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>Dijital ikizi aç</a>
+        <a class="btn btn-g" href="web/?d=bayrampasa&amp;m=normal&amp;s=on&amp;h=8&amp;story=1">Sunum modunda izle</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="kpis reveal" aria-label="Bayrampaşa dijital ikizinden dört sonuç">
+      <div class="kpi"><span class="num" data-k="peak">−</span><p>şebekenin tepe debisi, normal gün</p></div>
+      <div class="kpi"><span class="num" data-k="dry">−</span><p>kesinti dönüşünde susuz kişi-saat (bugün <span data-k="dry0">−</span>)</p></div>
+      <div class="kpi"><span class="num" data-k="days">−</span><p>depremden sonra temiz içme suyu (bugün <span data-k="days0">−</span>)</p></div>
+      <div class="kpi"><span class="num" data-k="leak">−</span><p>sızıntı için aranacak boru (bugün <span data-k="leak0">−</span>)</p></div>
+    </div>
+    <p class="small" style="margin-top:14px">Bayrampaşa dijital ikizi, 24 saat simülasyon (EPANET). Şebeke OpenStreetMap'ten üretilmiş modeldir, gerçek İSKİ şebekesi değildir.</p>
+  </div>
+
+  <section class="s" id="problem">
+    <div class="wrap">
+      <p class="eyebrow">Problem</p>
+      <h2 class="reveal">Herkes suyu aynı anda çekiyor; şebeke bunu kaldıramıyor</h2>
+      <div class="split">
+        <div class="media reveal"><img src="assets/problem.jpg" alt="Bir sıra apartman: sabah bütün bodrum depoları aynı borudan aynı anda doluyor, üst katlar susuz" loading="lazy"></div>
+        <div class="reveal">
+          <p class="lead" style="margin:0">İstanbul apartmanlarının bodrumundaki depolar şamandıralı vanayla çalışır: su eksildiği an depo yeniden dolar. Sabah ve akşam binlerce depo aynı anda dolunca basınç düşer, üst katlar ve deposuz binalar susuz kalır.</p>
+          <div class="compare">
+            <div class="bad"><span class="num">35,1</span><span>1.000 abone başına susuzluk şikâyeti, Bayrampaşa (İBB 2023)</span></div>
+            <div class="bad"><span class="num" data-k="pmin0">−</span><span>kesinti dönüşünde en düşük basınç (hizmet sınırı 15 m)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="nasil">
+    <div class="wrap">
+      <p class="eyebrow">Nasıl çalışır</p>
+      <h2 class="reveal">Her depoya küçük bir kit, hepsinin üstünde bir dijital ikiz</h2>
+      <div class="split">
+        <div class="media reveal"><img src="assets/kesit.jpg" alt="Apartman kesiti: bodrumda bina deposu ve Sanal Baraj kiti, sokak altında şebeke borusu, gökyüzünde kite bağlı dijital ikiz" loading="lazy"></div>
+        <ol class="steps reveal">
+          <li><h3>Kit ölçer</h3><p>Mevcut depoya eklenen kit her 15 dakikada seviye, basınç ve sarsıntıyı gönderir.</p></li>
+          <li><h3>Dijital ikiz dener</h3><p>İlçenin bütün boruları ve binaları simülasyonda; her karar önce burada denenir.</p></li>
+          <li><h3>Orkestratör planlar</h3><p>Yapay zekâ her deponun ne zaman ve ne kadar dolacağına karar verir; kit vanayı buna göre açar.</p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="sonuc">
+    <div class="wrap">
+      <p class="eyebrow">Sonuçlar · Bayrampaşa</p>
+      <h2 class="reveal">Aynı sistem, dört ayrı günde dört ayrı iş</h2>
+      <div class="days">
+        <article class="day split">
+          <div class="media reveal"><img src="assets/normal-gun.jpg" alt="3B çubuk grafik: 23 bölgenin 24 saatlik debisi; bugün sabah ve akşam turuncu tepeler, orkestratörle düz mavi yüzey" loading="lazy"></div>
+          <div class="reveal"><span class="label">Her gün</span><h3>Tepe düzleşir</h3><p>Depolar gece ve sakin saatlerde dolar. Aynı boru ve pompa daha çok binaya yeter.</p>
+            <div class="compare"><div class="bad"><span class="num" data-k="peak0">−</span><span>m³/sa tepe, bugün</span></div><div class="ok"><span class="num" data-k="peak1">−</span><span>m³/sa tepe, orkestratör</span></div></div></div>
+        </article>
+        <article class="day split rev">
+          <div class="media reveal"><img src="assets/kesinti.jpg" alt="3B saatlik debi: kesintiden sonra şamandıralı vanada 16:00'da kırmızı dev çubuk; orkestratörde debi yayılıyor" loading="lazy"></div>
+          <div class="reveal"><span class="label">Kesinti günü</span><h3>Su döndüğü an basınç çökmez</h3><p>Kit kesintiyi önceden bilir, depoları doldurur; su dönünce dolumu sıraya koyar.</p>
+            <div class="compare"><div class="bad"><span class="num" data-k="pmin0b">−</span><span>en düşük basınç, bugün</span></div><div class="ok"><span class="num" data-k="pmin1">−</span><span>en düşük basınç, orkestratör</span></div></div></div>
+        </article>
+        <article class="day split">
+          <div class="media reveal"><img src="assets/deprem.jpg" alt="Bayrampaşa dioraması, deprem günü: kırmızı ışık sütunları boru kırıkları; mühürlü depolu binalar mavi, deposuz binalar kırmızı" loading="lazy"></div>
+          <div class="reveal"><span class="label">Deprem günü</span><h3>Depo mühürlenir, su temiz kalır</h3><p>İvmeölçer sarsıntıda girişi saniyeler içinde kapatır; kırık şebekedeki şüpheli su depoya girmez.</p>
+            <div class="compare"><div class="bad"><span class="num" data-k="risk0">−</span><span>kirlenme riskindeki depo, bugün</span></div><div class="ok"><span class="num" data-k="risk1">−</span><span>kirlenme riskindeki kit deposu</span></div></div></div>
+        </article>
+        <article class="day split rev">
+          <div class="media reveal"><img src="assets/sizinti.jpg" alt="DMA-03'ün 3B görünümü: her düğümde sızıntı ihtimali turuncu sütunlarla; en yüksek sütun gerçek sızıntının yanında" loading="lazy"></div>
+          <div class="reveal"><span class="label">Her gece</span><h3>Binalar sızıntıyı bulur</h3><p>Gece şebeke sessizken binalardaki basınç sensörleri yeni bir sızıntının izini görür.</p>
+            <div class="compare"><div class="bad"><span class="num" data-k="leak0b">−</span><span>aranacak hat, yalnız sayaç</span></div><div class="ok"><span class="num" data-k="leak1">−</span><span>aranacak hat, akıllı kit</span></div></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="fikir">
+    <div class="wrap">
+      <p class="eyebrow o">Yeni fikirler · doğanın enerjisiyle</p>
+      <h2 class="reveal">Sanal baraj aynı zamanda bir sanal batarya</h2>
+      <div class="ideas">
+        <article class="idea reveal"><img src="assets/gunes.jpg" alt="3B saatlik çubuklar: öğlen elektrik fiyatı sıfıra iniyor, güneş odaklı plan pompalamayı o saatlere topluyor" loading="lazy"><div><span class="eyebrow o" style="margin:0">Güneşle dolum</span><h3>Depolar öğlen dolsun</h3><p>Orkestratör yarının elektrik fiyatını okur; depoları güneş elektriğinin bol ve ucuz olduğu saatte doldurur.</p><span class="num" data-k="solar">−</span><span class="small" data-k="solarday"></span></div></article>
+        <article class="idea reveal"><img src="assets/enerji.jpg" alt="Bodrum kesiti: depo girişinde mikro türbin turuncu parlıyor, hidrofor kırmızı" loading="lazy"><div><span class="eyebrow o" style="margin:0">Basınçtan enerji</span><h3>Boşa giden basınç elektriğe</h3><p>Su depoya basınçla gelir, vana bu basıncı yok eder. Girişe mikro türbin konursa kit kendi elektriğini üretir.</p><span class="num" data-k="turbine">−</span><span class="small">kWh/gün, ilçe toplamı (türbin verimi %40, tahmin)</span></div></article>
+        <article class="idea reveal"><img src="assets/sel.jpg" alt="Sağanak altında apartman kesiti: sokakta su birikiyor, akıllı yağmur deposu önceden boşaltılmış" loading="lazy"><div><span class="eyebrow o" style="margin:0">Yağmur ve sel</span><h3>Sağanaktan önce boşalır</h3><p>Akıllı yağmur deposu hava tahminini okur ve sağanaktan önce kendini boşaltır; çatı suyu yola inmez.</p><span class="num" data-k="rain">−</span><span class="small" data-k="raintxt"></span></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="kit">
+    <div class="wrap">
+      <p class="eyebrow">Kit tasarımı</p>
+      <h2 class="reveal">Binada hiçbir şey değişmez; hepsi sanayide hazır parçalar</h2>
+      <p class="lead reveal">Şamandıranın yerine motorlu vana, yanına iki sensör ve bir kutu. Bina başına 245–425 € (tahmin), tesisatçı yaklaşık iki saatte takar.</p>
+      <div class="kit-grid">
+        <div class="media reveal"><img src="assets/kit-bodrum.jpg" alt="Bodrum kesiti: basınç sensörü, motorlu vana, seviye sensörü, kit kutusu, hidrofor arayüzü ve mikro türbin" loading="lazy"></div>
+        <div class="media reveal"><img src="assets/kit-parcalar.jpg" alt="Kitin patlatılmış görünümü: IP65 kutu, devre kartı, batarya, vana ve sensörler" loading="lazy"></div>
+      </div>
+      <div class="chips reveal"><span class="chip">Motorlu küresel vana · ≤10 sn kapanır</span><span class="chip">Basınç transmitteri · 0–10 bar</span><span class="chip">Ultrasonik seviye sensörü</span><span class="chip">ESP32-S3 · LTE-M</span><span class="chip">MEMS ivmeölçer</span><span class="chip">LiFePO₄ batarya</span><span class="chip">IP65 kutu</span></div>
+    </div>
+  </section>
+
+  <div class="band">
+    <div class="wrap">
+      <div><p class="eyebrow">Canlı dijital ikiz</p><h2>Bayrampaşa'nın <span data-k="bld">bütün</span> binası tarayıcınızda</h2><p class="lead" style="margin-top:12px">Kurulum gerekmez. Beş görünüm, dört senaryo, 15 adımlık sunum modu.</p></div>
+      <div class="cta" style="margin:0"><a class="btn btn-p" href="web/?d=bayrampasa&amp;m=normal&amp;s=on&amp;h=8"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>Dijital ikizi aç</a><a class="btn btn-g" href="web/?d=bayrampasa&amp;m=normal&amp;s=on&amp;h=8&amp;story=1">Sunum modunda izle</a></div>
+    </div>
+  </div>
+
+  <section class="s" id="takim">
+    <div class="wrap">
+      <p class="eyebrow">Takım AQUAİST</p>
+      <h2 class="reveal">Dört kişi, dört iş paketi</h2>
+      <div class="team">
+        <div class="person reveal"><div class="av" style="background:#0A6F93">EB</div><span class="role">Teknik sorumlu</span><h3>Emirhan Baydere</h3><p>Dijital ikiz, simülasyon, yapay zekâ modülleri, web arayüzü ve canlı site.</p></div>
+        <div class="person reveal"><div class="av" style="background:#2BA8D6">ED</div><span class="role">Veri ve analiz</span><h3>Emre Demir</h3><p>İBB ve İSKİ verilerinin derlenmesi, susuzluk ve arıza analizi, ilçe önceliklendirmesi.</p></div>
+        <div class="person reveal"><div class="av" style="background:#EBA43C">ZT</div><span class="role">Donanım ve maliyet</span><h3>Zehranur Türkmen</h3><p>Kit malzemelerinin araştırılması, maliyet tablosu, saha ve pilot planı.</p></div>
+        <div class="person reveal"><div class="av" style="background:#5CC9B5">ZU</div><span class="role">Etki ve sunum</span><h3>Zeynep Ulubent</h3><p>Enerji ve ölçek araştırması, etki göstergeleri, sunum ve hikâye kurgusu.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong style="color:var(--ink)">Sanal Baraj · AQUAİST</strong> · Water AI Hackathon 2026</p>
+    <p>Kaynak kod: <a href="https://github.com/KamSecHQ/sanal-baraj">github.com/KamSecHQ/sanal-baraj</a> · Python, EPANET (WNTR), cvxpy, MapLibre · bütün varsayımlar <code>twin/config.py</code> içinde, açıklamalarıyla.</p>
+    <p>Veri: İBB Açık Veri, OpenStreetMap, Copernicus GLO-30, TÜİK, MGM, EPİAŞ. Rakamlar Bayrampaşa dijital ikizinden; gerçek şebekede pilotla doğrulanacak. Kit fiyatları tahmindir.</p>
+  </div>
+</footer>
+
+<script>
+// Rakamlar elle yazılmaz: simülasyon özetinden okunur.
+(async () => {
+  const set = (k, v) => document.querySelectorAll(`[data-k="${k}"]`).forEach(e => { e.textContent = v; });
+  const f0 = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 });
+  const f1 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const pct = x => (x < 0 ? "−" : "+") + "%" + f1.format(Math.abs(x));
+  try {
+    const s = await (await fetch("data/bayrampasa/summary.json")).json();
+    const L = await (await fetch("data/bayrampasa/leak.json")).json();
+    const off = s.scenarios.off.daily, on = s.scenarios.on.daily;
+    set("peak", pct(100 * (on.peak_inflow_m3h / off.peak_inflow_m3h - 1)));
+    set("peak0", f0.format(off.peak_inflow_m3h)); set("peak1", f0.format(on.peak_inflow_m3h));
+    const o0 = s.outage.off.daily, o1 = s.outage.on.daily;
+    set("dry", f0.format(o1.unserved_after_ph)); set("dry0", f0.format(o0.unserved_after_ph));
+    set("pmin0", f1.format(o0.min_pressure_after) + " m"); set("pmin0b", f1.format(o0.min_pressure_after) + " m"); set("pmin1", f1.format(o1.min_pressure_after) + " m");
+    const q = s.quake, d = m3 => 1000 * m3 / (q.drink_lpcd * q.population);
+    set("days", f1.format(d(q.on.daily.clean_m3_end)) + " gün"); set("days0", f1.format(d(q.off.daily.clean_m3_end)) + " gün");
+    set("risk0", f0.format(q.off.daily.risk_tanks)); set("risk1", f0.format(q.on.daily.risk_tanks));
+    const km = m => f1.format(m / 1000) + " km";
+    set("leak", km(L.metrics.dense.search_m)); set("leak1", km(L.metrics.dense.search_m));
+    set("leak0", km(L.metrics.meter.search_m)); set("leak0b", km(L.metrics.meter.search_m));
+    const x = s.solar.ptf_tl;
+    set("solar", pct(100 * (x.solar / x.off - 1))); set("solarday", ` piyasa maliyeti, ${s.solar.date} gerçek fiyatıyla`);
+    set("turbine", f0.format(s.energy.turbine_kwh_d)); set("bld", f0.format(s.counts.buildings));
+    const ev = s.rain.events[0];
+    set("rain", "%" + f0.format(100 * ev.smart_share)); set("raintxt", ` ${f0.format(ev.mm)} mm sağanakta çatı suyunun tutulan payı (dolu klasik depo %${f0.format(100 * ev.passive_share)})`);
+  } catch (e) { console.warn("Özet okunamadı", e); }
+})();
+// Kaydırınca beliren bölümler
+const io = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" }) : null;
+document.querySelectorAll(".reveal").forEach(el => io ? io.observe(el) : el.classList.add("in"));
+</script>
 </body>
 </html>

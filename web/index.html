@@ -15,7 +15,7 @@
   <div id="map" aria-label="Şebeke haritası"></div>
 
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Sanal Baraj ana görünüm">
+    <a class="brand" href="../" title="Ana sayfa" aria-label="Sanal Baraj ana sayfa">
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
         <path class="bm-wall" d="M20 5h5l3 22h-8z"/>
         <path class="bm-water" d="M3 27h17V12C14 12 8 19 3 27z"/>
@@ -103,6 +103,7 @@
   </dialog>
 
   <div id="loader" class="loader" role="status">
+    <img class="loader-bg" src="../assets/diorama.jpg" alt="" aria-hidden="true">
     <svg class="loader-mark" viewBox="0 0 32 32" aria-hidden="true">
       <path class="bm-wall" d="M20 5h5l3 22h-8z"/>
       <clipPath id="ld-clip"><path d="M3 27h17V12C14 12 8 19 3 27z"/></clipPath>
@@ -116,6 +117,21 @@
   </div>
 
   <div id="error" class="error" role="alert" hidden></div>
+
+  <div id="welcome" class="welcome" hidden role="dialog" aria-labelledby="wl-h">
+    <p class="wl-eyebrow">Dijital ikiz · canlı</p>
+    <h2 id="wl-h">Sanal Baraj'a hoş geldiniz</h2>
+    <p>Haritadaki her bina, boru ve basınç noktası 24 saat boyunca simülasyonda. Mavi binaların bodrumunda akıllı depo var.</p>
+    <ol>
+      <li><b>Üstten bir gün seçin:</b> normal gün, kesinti, deprem ya da sızıntı avı.</li>
+      <li><b>Soldan senaryoyu değiştirin:</b> yapay zekâ kapalı ile açık arasındaki fark.</li>
+      <li><b>Alttan saati oynatın</b> ya da bir binaya tıklayıp ayrıntısını görün.</li>
+    </ol>
+    <div class="wl-actions">
+      <button type="button" class="btn-primary" id="wl-story"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>Sunumu başlat</button>
+      <button type="button" class="wl-ghost" id="wl-close">Kendim keşfedeyim</button>
+    </div>
+  </div>
 
   <script src="vendor/maplibre-gl.js"></script>
   <script type="module" src="js/main.js"></script>
