@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Sanal Baraj · Dijital İkiz</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 26h24L22 6h-4z' fill='%2342B9DD'/%3E%3Cpath d='M4 26c4-3 8-3 12 0s8 3 12 0' stroke='%23E8F1F3' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+  <!-- Bütün bağımlılıklar yerelde: final günü internet olmasa da çalışır -->
+  <link rel="stylesheet" href="vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map" aria-label="Şebeke haritası"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Sanal Baraj ana görünüm">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path class="bm-wall" d="M20 5h5l3 22h-8z"/>
+        <path class="bm-water" d="M3 27h17V12C14 12 8 19 3 27z"/>
+        <path class="bm-wave" d="M5 22c3-2 6-2 9 0s4 1.4 6 .6"/>
+      </svg>
+      <span class="brand-name">Sanal Baraj</span>
+    </a>
+    <label class="district">
+      <span class="sr-only">Bölge</span>
+      <select id="district"></select>
+    </label>
+    <nav class="modes" role="tablist" aria-label="Görünüm">
+      <button type="button" role="tab" class="mode" data-mode="normal">Normal gün</button>
+      <button type="button" role="tab" class="mode" data-mode="outage">Kesinti günü</button>
+      <button type="button" role="tab" class="mode" data-mode="quake">Deprem günü</button>
+      <button type="button" role="tab" class="mode" data-mode="leak">Sızıntı avı</button>
+      <button type="button" role="tab" class="mode" data-mode="istanbul">Nereden başlamalı</button>
+    </nav>
+    <div class="actions">
+      <button type="button" id="story-btn" class="btn-primary" title="Sunum modunu başlat (S)">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>Sunum
+      </button>
+      <button type="button" id="theme-btn" class="icon-btn" title="Açık / koyu tema (T)" aria-label="Temayı değiştir">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 3a7 7 0 0 1 0 14z"/></svg>
+      </button>
+      <button type="button" id="help-btn" class="icon-btn" title="Kısayollar ve yöntem (?)" aria-label="Yardım">?</button>
+    </div>
+  </header>
+
+  <aside id="panel" class="panel" aria-label="Senaryo ve göstergeler"></aside>
+
+  <aside id="inspector" class="inspector" aria-label="Seçilen öğe" hidden></aside>
+
+  <section id="dock" class="dock" aria-label="Zaman çizelgesi">
+    <div class="clock">
+      <button type="button" id="play" class="play" aria-label="Oynat (boşluk)" aria-pressed="false">
+        <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>
+        <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/></svg>
+      </button>
+      <div class="clock-text">
+        <output id="time" class="time">08:00</output>
+        <span id="phase" class="phase"></span>
+      </div>
+      <button type="button" id="speed" class="speed" title="Oynatma hızı">1×</button>
+    </div>
+    <div class="dock-chart">
+      <div class="dock-head"><span id="dock-title"></span><span id="dock-legend" class="legend-inline"></span></div>
+      <svg id="dock-svg" role="slider" tabindex="0" aria-label="Saat" aria-valuemin="0" aria-valuemax="23" aria-valuenow="8"></svg>
+    </div>
+  </section>
+
+  <div id="legend" class="legend" aria-label="Lejant ve katmanlar"></div>
+
+  <div id="story" class="story" hidden aria-live="polite"></div>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+
+  <dialog id="help" class="help">
+    <form method="dialog"><button class="icon-btn close" aria-label="Kapat">×</button></form>
+    <h2>Nasıl kullanılır</h2>
+    <div class="help-grid">
+      <section>
+        <h3>Kısayollar</h3>
+        <dl class="keys">
+          <dt><kbd>Boşluk</kbd></dt><dd>Günü oynat / durdur</dd>
+          <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Bir saat geri / ileri</dd>
+          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Senaryo seç</dd>
+          <dt><kbd>B</kbd> basılı</dt><dd>Yapay zekâ kapalı hali göster</dd>
+          <dt><kbd>N</kbd> <kbd>K</kbd> <kbd>D</kbd> <kbd>L</kbd> <kbd>I</kbd></dt><dd>Normal gün, kesinti, deprem, sızıntı, İstanbul</dd>
+          <dt><kbd>S</kbd></dt><dd>Sunum modu (sonraki: <kbd>→</kbd> ya da sunum kumandası)</dd>
+          <dt><kbd>F</kbd></dt><dd>Haritayı bölgeye sığdır</dd>
+          <dt><kbd>T</kbd></dt><dd>Açık / koyu tema (projeksiyonda açık tema daha okunaklı)</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Seçimi ya da sunumu kapat</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Bu harita nedir</h3>
+        <p>Bir ilçenin su şebekesinin dijital ikizi. Yollar OpenStreetMap'ten boru adayına, kotlar Copernicus GLO-30'dan,
+          talep İBB ilçe tüketiminden türetildi. Her bina deposu ve hidroforu modelde; EPANET (WNTR) ile 24 saat çözülür.</p>
+        <p>Şebeke sentetiktir, gerçek İSKİ şebekesi değildir. Bütün varsayımlar <code>twin/config.py</code> içinde
+          açıklamalarıyla duruyor; rakamlar simülasyondan gelir.</p>
+        <p>Bir öğeye tıklayınca sağda 24 saatlik geçmişi açılır: bina deposu, düğüm basıncı, boru debisi ya da DMA girişi.</p>
+      </section>
+    </div>
+  </dialog>
+
+  <div id="loader" class="loader" role="status">
+    <svg class="loader-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <path class="bm-wall" d="M20 5h5l3 22h-8z"/>
+      <clipPath id="ld-clip"><path d="M3 27h17V12C14 12 8 19 3 27z"/></clipPath>
+      <path class="bm-outline" d="M3 27h17V12C14 12 8 19 3 27z"/>
+      <rect class="ld-fill" clip-path="url(#ld-clip)" x="0" y="27" width="22" height="0"/>
+    </svg>
+    <div class="loader-text">
+      <strong>Sanal Baraj</strong>
+      <span id="loader-msg">Dijital ikiz yükleniyor</span>
+    </div>
+  </div>
+
+  <div id="error" class="error" role="alert" hidden></div>
+
+  <script src="vendor/maplibre-gl.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
