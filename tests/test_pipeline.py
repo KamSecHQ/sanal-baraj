@@ -207,6 +207,16 @@ def test_solar_filling_shifts_pumping_to_cheap_sun_hours(synthetic):
     assert abs(a - b) / a < 0.005
 
 
+def test_rain_tanks_buffer_storms_when_emptied_first(synthetic):
+    _, _, cmp = synthetic
+    r = cmp.extra["rain"]
+    assert r["tank_m3"] > 0 and r["collectable_m3_y"] > r["tank_m3"]
+    for e in r["events"]:
+        # Önceden boşaltılan depo en az dolu başlayan kadar tutar; tutulan su akan sudan fazla olamaz
+        assert e["passive_m3"] <= e["smart_m3"] <= e["runoff_m3"] + 1e-9
+    assert 0 < r["used_share_of_consumption"] < r["nonpotable_share"] + 1e-9
+
+
 def test_energy_inlet_budget(synthetic):
     _, _, cmp = synthetic
     e = cmp.energy

@@ -225,5 +225,19 @@ TURBINE_RESIDUAL_M = 3.0        # türbinden sonra depoya dolum için bırakıla
 # Kitin ortalama elektrik ihtiyacı: denetleyici uykuda, LTE-M 15 dakikada bir, sensörler ve vana (tahmin)
 KIT_POWER_W = 3.0
 
+# --- Yağmur deposu ve sel tamponu (21 Kas) ---------------------------------------
+# İstanbul aylık yağış ortalamaları, mm (MGM resmi iklim istatistikleri, 1950–2025; toplam ~659 mm)
+RAIN_MONTHLY_MM = [88.8, 70.7, 62.3, 47.8, 32.9, 27.6, 22.1, 23.9, 39.7, 66.3, 78.1, 99.2]
+RAIN_RUNOFF_COEF = 0.8          # çatıdan depoya ulaşan pay (buharlaşma, ilk yıkama, taşma; tahmin)
+# Depo hacmi = yıllık toplanabilir suyun bu oranı (Planlı Alanlar İmar Yönetmeliği, TS EN 16941-1 yöntemi: en az %6).
+# Senaryo: her konut binasında yağmur deposu var (bugün yalnız 2.000 m² üstü parsellerdeki yeni binalarda zorunlu).
+RAIN_TANK_SHARE = 0.06
+# Sağanaktan önce klasik deponun doluluğu: aynı hafta yağışlıysa depo büyük ölçüde doludur (tahmin)
+RAIN_PASSIVE_START = 0.9
+# Denenen sağanaklar (mm/gün). 203,9 mm: 13–14 Ekim 2026'da Bayrampaşa'nın komşusu Eyüpsultan'da (İBB AKOM)
+RAIN_EVENTS_MM = (50.0, 100.0, 203.9)
+# Yağmur suyunun kullanılabildiği içme dışı tüketim payı (tuvalet, temizlik, bahçe; tahmin)
+RAIN_NONPOTABLE_SHARE = 0.25
+
 # --- Simülasyon ------------------------------------------------------------
 HOURS = 24

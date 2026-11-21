@@ -24,6 +24,7 @@ from .outage import OutageRun, pick_dma, simulate_outage
 from .pressure import Prv, apply_zones, candidate_zones, evaluate, merge, net_curve, savings_curve
 from .quake import QuakeAreas, QuakeStudy, study as quake_study
 from .energy import EnergyStudy, study as energy_study
+from .rain import study as rain_study
 from .scenario import Scenario, activate, metrics, run, set_settings, step_prices
 from .tanks import NodeStorage, aggregate, assign_tanks, booster_power_kw
 
@@ -145,6 +146,7 @@ def compare(twin: Twin, buildings: pd.DataFrame, rng: np.random.Generator,
         name = cmp.outage_dma or outage_dma or pick_dma(twin, b)
         cmp.leak = leak_study(twin, storage, plan, on.settings, name, np.random.default_rng(int(rng.integers(2**31))), log=log)
     cmp.energy = energy_study(twin, b, storage, on)
+    cmp.extra["rain"] = rain_study(b)
     if quake_areas is not None:
         cmp.quake = quake_study(twin, b, storage, {"off": off, "on": on}, quake_areas,
                                 np.random.default_rng(int(rng.integers(2**31))), log=log)

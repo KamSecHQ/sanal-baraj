@@ -280,6 +280,10 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
         x = cmp.extra["solar"]
         summary["solar"] = {**x, "ptf_tl": {k: _r(v) for k, v in x["ptf_tl"].items()},
                             "solar_share": {k: _r(v, 4) for k, v in x["solar_share"].items()}}
+    if "rain" in cmp.extra:
+        r = cmp.extra["rain"]
+        summary["rain"] = {k: (_r(v, 4) if isinstance(v, float) else v) for k, v in r.items() if k != "events"}
+        summary["rain"]["events"] = [{k: _r(v, 4) for k, v in e.items()} for e in r["events"]]
     if energy is not None:
         summary["energy"] = {k: (_r(v, 3) if isinstance(v, float) else v) for k, v in energy.summary.items()}
     if quake:

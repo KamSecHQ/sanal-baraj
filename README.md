@@ -179,6 +179,14 @@ kadarında kit (ortalama 3 W, tahmin) kendi enerjisini üretir. Şebeke basınc�
 beslemek hidrofor enerjisini çok azaltır ama o talep sanal barajdan çıkıp şebekenin tepe saatine döner; önerilmiyor.
 Bina incelemesinde her binanın enerji bütçesi görünür. Basınç pilotunun vanalarındaki enerji: `scripts/vana_turbin.py`.
 
+## Yağmur deposu ve sel tamponu
+
+`twin/rain.py`: her konut binasında yönetmelik büyüklüğünde (yıllık toplanabilir suyun %6 kadarı) yağmur deposu
+senaryosu. Bayrampaşa'da toplam ~77.000 m³. Sağanakta çatılardan akan suyun depolarda tutulan payı: 50 mm'de dolu
+başlayan klasik depoyla %8, hava tahminine göre önceden boşaltılan akıllı depoyla %79; 100 mm'de %4 ve %40;
+13–14 Ekim 2026'da Eyüpsultan'a düşen 203,9 mm'de %2 ve %19. Yağmur suyu içme dışı işlerde yılda şebeke
+tüketiminin ~%9 kadarını karşılar (aylık ortalama yağışla, iyimser). Normal gün panelinde özet.
+
 ## Modüller
 
 | Modül | Ne yapıyor |
@@ -192,6 +200,7 @@ Bina incelemesinde her binanın enerji bütçesi görünür. Basınç pilotunun 
 | `twin/pressure.py` | Basınç pilotu: aday alt bölgeler, kazanç tahmini, seçim, uygulama. |
 | `twin/outage.py` | Kesinti günü, saat saat PDD simülasyonu. |
 | `twin/leak.py` | Sızıntı avı: aday imzaları, gürültü, en büyük olabilirlik, üç sensör düzeni. |
+| `twin/rain.py` | Yağmur deposu: sağanakta tutulan su (dolu ve önceden boşaltılan depo), yıllık içme dışı kullanım. |
 | `twin/energy.py` | Basınçtan enerji: depo girişinde boşa giden basınç, mikro türbin, doğrudan besleme. |
 | `twin/quake.py` | Deprem günü: İBB mahalle hasarını borulara dağıtma, kırık ve sızıntı açıklıkları, saat saat PDD, kit mühürü, temiz su. |
 | `twin/scenario.py` | Senaryoyu modele uygular, simüle eder, göstergeleri hesaplar. |

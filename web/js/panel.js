@@ -75,7 +75,19 @@ function normalShell() {
     <section class="p-sec"><h2 class="p-h">Gün akışı</h2><ol class="flow" id="p-flow"></ol></section>
     <section class="p-sec"><h2 class="p-h">Günün hesabı</h2><div class="ledger-wrap"><table class="ledger" id="p-ledger"></table></div></section>
     ${energyNote()}
+    ${rainNote()}
     <footer class="p-foot">${footNote()}</footer>`;
+}
+
+// Yağmur deposu ve sel tamponu (twin/rain.py): her konutta yönetmelik büyüklüğünde yağmur deposu senaryosu
+function rainNote() {
+  const r = D.summary.rain;
+  if (!r || !r.events?.length) return "";
+  const rows = r.events.map((e) => `<tr><th scope="row">${fmt1.format(e.mm)} mm</th><td>${fmt0.format(e.runoff_m3)}</td><td>%${fmt0.format(100 * e.passive_share)}</td><td class="active">%${fmt0.format(100 * e.smart_share)}</td></tr>`).join("");
+  return `<section class="p-sec"><h2 class="p-h">Yağmur ve sel</h2>
+    <p class="small">Her konutta yönetmelik büyüklüğünde yağmur deposu olsaydı: toplam ${fmt0.format(r.tank_m3)} m³. Sağanakta çatılardan akan suyun depolarda tutulan payı:</p>
+    <div class="ledger-wrap"><table class="ledger"><thead><tr><th>Sağanak</th><th>Akan, m³</th><th>Dolu depo</th><th class="active">Önceden boşaltılan</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="small">Akıllı depo hava tahminini okuyup sağanaktan önce boşalır. Yıl boyu yağmur suyu içme dışı işlerde şebeke tüketiminin %${fmt1.format(100 * r.used_share_of_consumption)} kadarını karşılar (aylık ortalama yağışla, iyimser).</p></section>`;
 }
 
 // Basınçtan enerji: depo girişinde boşa giden şebeke basıncı (twin/energy.py)

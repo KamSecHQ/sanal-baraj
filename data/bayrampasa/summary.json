@@ -19,7 +19,7 @@
   "dem": true,
   "seed": 42
  },
- "built_at": "2026-11-21T14:26:24+00:00",
+ "built_at": "2026-11-21T14:32:15+00:00",
  "center": [
   28.901397,
   41.048798
@@ -9746,6 +9746,45 @@
    "on": 0.2909,
    "solar": 0.4231
   }
+ },
+ "rain": {
+  "buildings": 17040,
+  "roof_m2": 2432510.0673,
+  "annual_mm": 659.4,
+  "collectable_m3_y": 1283197.7107,
+  "tank_m3": 76991.8626,
+  "used_m3_y": 1243526.3041,
+  "used_share_of_consumption": 0.0909,
+  "nonpotable_share": 0.25,
+  "passive_start": 0.9,
+  "tank_share": 0.06,
+  "nonpotable_days_from_tanks": 9.011,
+  "events": [
+   {
+    "mm": 50.0,
+    "runoff_m3": 97300.4027,
+    "smart_m3": 76991.8626,
+    "passive_m3": 7699.1863,
+    "smart_share": 0.7913,
+    "passive_share": 0.0791
+   },
+   {
+    "mm": 100.0,
+    "runoff_m3": 194600.8054,
+    "smart_m3": 76991.8626,
+    "passive_m3": 7699.1863,
+    "smart_share": 0.3956,
+    "passive_share": 0.0396
+   },
+   {
+    "mm": 203.9,
+    "runoff_m3": 396791.0422,
+    "smart_m3": 76991.8626,
+    "passive_m3": 7699.1863,
+    "smart_share": 0.194,
+    "passive_share": 0.0194
+   }
+  ]
  },
  "energy": {
   "tank_buildings": 10247,
