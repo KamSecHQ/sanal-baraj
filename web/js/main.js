@@ -232,7 +232,7 @@ function onKey(e) {
     if (state.mode === "istanbul") return;
     set({ hour: (state.hour + (k === "ArrowRight" ? 1 : 23)) % 24, playing: false });
     e.preventDefault();
-  } else if (["1", "2", "3"].includes(k)) {
+  } else if (["1", "2", "3", "4"].includes(k)) {
     const key = scenarioKeys()[Number(k) - 1];
     if (key) set({ sc: key, peek: false });
   } else if ((k === "b" || k === "B") && !e.repeat && state.mode !== "istanbul") {

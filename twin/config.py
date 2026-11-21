@@ -204,5 +204,26 @@ QUAKE_REOPEN_AFTER_H = 1
 QUAKE_SUSPECT_SCOPE = "dma"
 QUAKE_HEAD_DROP_M = 0.0
 
+# --- Güneşle dolum (21 Kas) ------------------------------------------------------
+# Orkestratör bugünkü üç zamanlı tarife yerine elektrik piyasasının saatlik fiyatına bakar. Profil gerçek bir gün:
+# EPİAŞ Gün Öncesi Piyasası, 26.10.2025, PTF (TL/MWh). Öğlen güneş üretimi bolken fiyat sıfıra yaklaşıyor.
+SOLAR_PRICE_DATE = "26.10.2025"
+SOLAR_PRICE_TL_MWH = [
+    3350.00, 3250.01, 3200.01, 3334.43, 3349.70, 3155.00, 3391.32, 2936.00, 1606.97, 850.00, 128.28, 10.01,
+    1.00, 1.01, 80.00, 395.10, 3233.07, 3400.00, 3400.00, 3400.00, 3400.00, 3400.00, 2807.77, 1606.98,
+]
+# Fiyatın düzleştirmeye göre ağırlığı (orkestratörün PRICE_WEIGHT'i yerine). 1,0 dolumu güneş saatlerine toplar ama
+# tepe debisini düşürmez; 0,3 tepeyi de düşürür, maliyet daha az iner (scripts/gunes_dolum.py).
+SOLAR_PRICE_WEIGHT = 1.0
+SOLAR_HOURS = (9, 16)           # güneş saatleri sayılan aralık, raporlama için
+
+# --- Basınçtan enerji (21 Kas) -------------------------------------------------
+# Depo girişinde şebeke basıncı vanada yok olur; girişe konan mikro türbin bunun bir kısmını elektriğe çevirir.
+# Küçük debide (bina başına birkaç L/dk) türbin verimi düşüktür (tahmin; üretici verisiyle doğrulanmalı).
+TURBINE_EFFICIENCY = 0.40
+TURBINE_RESIDUAL_M = 3.0        # türbinden sonra depoya dolum için bırakılan basınç (m)
+# Kitin ortalama elektrik ihtiyacı: denetleyici uykuda, LTE-M 15 dakikada bir, sensörler ve vana (tahmin)
+KIT_POWER_W = 3.0
+
 # --- Simülasyon ------------------------------------------------------------
 HOURS = 24

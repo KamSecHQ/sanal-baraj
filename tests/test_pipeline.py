@@ -137,6 +137,8 @@ def test_export(synthetic, tmp_path):
     assert all(f"p{h}" in props and f"pa{h}" in props and f"pb{h}" in props for h in range(24))
     assert any("o0" in f["properties"] for f in nodes)
     assert all(f"e{h}" in props and f"ea{h}" in props for h in range(24))
+    assert summary["energy"]["inlet_kwh_d"] > 0
+    assert all(f"ps{h}" in props for h in range(24)) and summary["solar"]["ptf_tl"]["solar"] > 0
     assert summary["quake"]["off"]["daily"]["risk_tanks"] > 0 == summary["quake"]["on"]["daily"]["risk_tanks"]
     quake = json.loads((tmp_path / "quake.json").read_text(encoding="utf-8"))
     assert len(quake["breaks"]) == 5 and all(a["geometry"] for a in quake["areas"])
@@ -192,6 +194,31 @@ def test_quake_kit_keeps_tank_water_clean(synthetic):
     assert sus and all(off.area_clean_m3[a][-1] == 0 for a in sus)
     for run in (off, on):
         assert np.allclose(sum(run.area_clean_m3.values()), run.hourly["clean_m3"])
+
+
+def test_solar_filling_shifts_pumping_to_cheap_sun_hours(synthetic):
+    _, _, cmp = synthetic
+    x = cmp.extra["solar"]
+    # Piyasa fiyatına bakan orkestratör pompalamayı güneş saatlerine kaydırır ve piyasa maliyetini düşürür
+    assert x["solar_share"]["solar"] > x["solar_share"]["on"] + 0.02
+    assert x["ptf_tl"]["solar"] < x["ptf_tl"]["on"]
+    # Su dengesi korunur: aynı su, başka saatte
+    a, b = cmp.scenarios["on"].applied.sum(), cmp.scenarios["solar"].applied.sum()
+    assert abs(a - b) / a < 0.005
+
+
+def test_energy_inlet_budget(synthetic):
+    _, _, cmp = synthetic
+    e = cmp.energy
+    assert e is not None
+    m = e.summary
+    # Girişte boşa giden basınç enerjisi pozitif; türbin bunun ancak verimi kadarını geri kazanır
+    assert m["inlet_kwh_d"] > 0
+    assert m["turbine_kwh_d"] <= m["inlet_kwh_d"] * m["turbine_efficiency"] + 1e-9
+    assert 0.0 <= m["self_powered_share"] <= 1.0 and 0.0 <= m["direct_demand_share"] <= 1.0
+    # Deposuz binada giriş enerjisi yok; doğrudan beslenebilir kat bina katını aşmaz
+    tank = cmp.buildings["tank_m3"].to_numpy() > 0
+    assert (e.inlet_w[~tank] == 0).all() and (e.direct_floors <= cmp.buildings["floors"].to_numpy()).all()
 
 
 def test_slugify_turkish():

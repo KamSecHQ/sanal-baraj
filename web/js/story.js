@@ -56,6 +56,15 @@ async function build() {
     figure: [signedPct(c.pump_tl.pct), "günlük basma maliyeti"],
     go: { mode: "normal", sc: "on", hour: 19 }, cam: "district",
   });
+  const x = s.solar;
+  if (S.solar && x) {
+    out.push({
+      title: "Depolar güneşle dolsun",
+      text: `Öğlen güneş elektriği bolken piyasa fiyatı sıfıra yaklaşıyor. Orkestratör gün öncesi fiyatı (EPİAŞ, ${x.date}) okuyup depoları o saatlerde dolduruyor: pompalamanın güneş saatlerine düşen payı %${fmt1.format(100 * x.solar_share.on)} yerine %${fmt1.format(100 * x.solar_share.solar)}, piyasa maliyeti ${signedPct(change(x.ptf_tl.solar, x.ptf_tl.off))}. Binlerce depo şebekeye bir batarya gibi esneklik veriyor.`,
+      figure: [signedPct(change(x.ptf_tl.solar, x.ptf_tl.off)), `pompalamanın piyasa maliyeti, gerçek fiyatla (${x.date})`],
+      go: { mode: "normal", sc: "solar", hour: 12 }, cam: "district",
+    });
+  }
   if (S.pilot && c.leak_m3.pilot !== undefined) {
     const energy = c.pump_kwh?.pct_pilot ?? 0;
     out.push({

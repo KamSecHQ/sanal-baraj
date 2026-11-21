@@ -3,6 +3,7 @@
 Normal gün üç senaryo:  off (şamandıralı vana) · on (akıllı depo) · pilot (akıllı depo + basınç pilotu)
 Kesinti günü iki mod:   off (şamandıra) · on (orkestratör), seçilen bir DMA'da
 Sızıntı avı:            aynı DMA'da gece ölçümüyle sızıntı yeri, üç sensör düzeniyle
+Güneşle dolum:          solar (akıllı depo, orkestratör tarife yerine saatlik piyasa fiyatına bakar)
 Deprem günü iki mod:    off (şamandıra) · on (kit girişi mühürler), bütün ilçede İBB senaryosunun boru hasarıyla
 """
 from __future__ import annotations
@@ -12,14 +13,18 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from .config import PARTICIPATION, PILOT_MAX_PRVS, SUBZONE_ELEV_SPREAD_M
+from .config import (
+    PARTICIPATION, PILOT_MAX_PRVS, SOLAR_HOURS, SOLAR_PRICE_DATE, SOLAR_PRICE_TL_MWH, SOLAR_PRICE_WEIGHT,
+    SUBZONE_ELEV_SPREAD_M,
+)
 from .network import Twin
 from .orchestrator import float_valve_plan, orchestrate
 from .leak import LeakStudy, study as leak_study
 from .outage import OutageRun, pick_dma, simulate_outage
 from .pressure import Prv, apply_zones, candidate_zones, evaluate, merge, net_curve, savings_curve
 from .quake import QuakeAreas, QuakeStudy, study as quake_study
-from .scenario import Scenario, metrics, run, set_settings, step_prices
+from .energy import EnergyStudy, study as energy_study
+from .scenario import Scenario, activate, metrics, run, set_settings, step_prices
 from .tanks import NodeStorage, aggregate, assign_tanks, booster_power_kw
 
 
@@ -39,6 +44,7 @@ class Comparison:
     outage_dma: str | None = None
     leak: LeakStudy | None = None
     quake: QuakeStudy | None = None
+    energy: EnergyStudy | None = None
     extra: dict = field(default_factory=dict)   # hafta sonu, doğrulama gibi ek sonuçlar
 
 
@@ -53,6 +59,20 @@ def uncontrolled_flows(twin: Twin, storage: NodeStorage, off: Scenario) -> dict[
         idx = [col[j] for j in d.junctions]
         fixed = sum((storage.fixed[j] for j in d.junctions), np.zeros(T))
         out[d.name] = fixed + float(leak_mean[idx].sum())
+    return out
+
+
+def solar_summary(m: dict, ptf: np.ndarray, steps: int) -> dict:
+    """Senaryoların piyasa fiyatıyla basma maliyeti (TL/gün) ve güneş saatlerindeki pompalama payı."""
+    dt = 24.0 / steps
+    hours = np.arange(steps) * dt
+    sun = (hours >= SOLAR_HOURS[0]) & (hours < SOLAR_HOURS[1])
+    out = {"date": SOLAR_PRICE_DATE, "price_tl_mwh": list(SOLAR_PRICE_TL_MWH), "hours": list(SOLAR_HOURS),
+           "ptf_tl": {}, "solar_share": {}}
+    for k in ("off", "on", "solar"):
+        kw = np.asarray(m[k]["hourly"]["pump_kw"], dtype=float)
+        out["ptf_tl"][k] = float((kw * ptf / 1000.0).sum() * dt)
+        out["solar_share"][k] = float(kw[sun].sum() / max(kw.sum(), 1e-9))
     return out
 
 
@@ -74,8 +94,9 @@ def compare(twin: Twin, buildings: pd.DataFrame, rng: np.random.Generator,
 
     off = run(twin, storage, float_valve_plan(storage), "off", "Yapay zekâ kapalı", retune=True)
     prices = step_prices(twin.steps)
-    plan = orchestrate(storage, {d.name: d.junctions for d in twin.dmas}, uncontrolled_flows(twin, storage, off),
-                       prices / prices.mean(), log=log)
+    dmas = {d.name: d.junctions for d in twin.dmas}
+    unc = uncontrolled_flows(twin, storage, off)
+    plan = orchestrate(storage, dmas, unc, prices / prices.mean(), log=log)
 
     set_settings(twin, off.settings)
     on = run(twin, storage, plan, "on", "Akıllı depo", retune=True)
@@ -90,14 +111,27 @@ def compare(twin: Twin, buildings: pd.DataFrame, rng: np.random.Generator,
     n_acc = sum(len(v) for v in accepted.values())
     log(f"  basınç pilotu: {len(cands)} aday, {n_acc} tanesi net kazançlı, en iyi {len(prvs)} tanesi seçildi")
 
+    # Güneşle dolum: aynı orkestratör, tarife yerine saatlik piyasa fiyatıyla (öğlen güneş bolken ucuz)
+    ptf = np.repeat(np.asarray(SOLAR_PRICE_TL_MWH, dtype=float), twin.steps // 24)
+    plan_s = orchestrate(storage, dmas, unc, ptf / ptf.mean(), price_weight=SOLAR_PRICE_WEIGHT, log=lambda *_: None)
+    set_settings(twin, off.settings)
+    solar = run(twin, storage, plan_s, "solar", "Güneşle dolum", retune=True)
+    activate(twin, on)
+
     m = {
         "off": metrics(twin, storage, off, booster_kw, fixed_tank_m3, tank_use_m3h),
         "on": metrics(twin, storage, on, booster_kw, fixed_tank_m3, tank_use_m3h),
         "pilot": metrics(pilot_twin, storage, pilot, booster_kw, fixed_tank_m3, tank_use_m3h),
+        "solar": metrics(twin, storage, solar, booster_kw, fixed_tank_m3, tank_use_m3h),
     }
-    cmp = Comparison(buildings=b, storage=storage, scenarios={"off": off, "on": on, "pilot": pilot}, metrics=m,
+    cmp = Comparison(buildings=b, storage=storage, scenarios={"off": off, "on": on, "pilot": pilot, "solar": solar}, metrics=m,
                      pilot_twin=pilot_twin, prvs=prvs, prv_curve=savings_curve(chosen),
                      prv_net_curve=net_curve(chosen), prv_candidates=len(cands), prv_accepted=n_acc)
+
+    cmp.extra["solar"] = solar_summary(m, ptf, twin.steps)
+    s = cmp.extra["solar"]
+    log(f"  güneşle dolum: piyasa maliyeti {s['ptf_tl']['on']:,.0f} → {s['ptf_tl']['solar']:,.0f} TL/gün, "
+        f"güneş saatlerinde pompalama %{100 * s['solar_share']['on']:.1f} → %{100 * s['solar_share']['solar']:.1f}")
 
     if with_outage:
         name = outage_dma or pick_dma(twin, b)
@@ -110,6 +144,7 @@ def compare(twin: Twin, buildings: pd.DataFrame, rng: np.random.Generator,
     if with_leak:
         name = cmp.outage_dma or outage_dma or pick_dma(twin, b)
         cmp.leak = leak_study(twin, storage, plan, on.settings, name, np.random.default_rng(int(rng.integers(2**31))), log=log)
+    cmp.energy = energy_study(twin, b, storage, on)
     if quake_areas is not None:
         cmp.quake = quake_study(twin, b, storage, {"off": off, "on": on}, quake_areas,
                                 np.random.default_rng(int(rng.integers(2**31))), log=log)

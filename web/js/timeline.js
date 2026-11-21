@@ -107,16 +107,25 @@ export function render() {
   }
 
   const period = s.tariff.period[h];
-  phase.textContent = `${TARIFF[period]} tarifesi, ${fmt2.format(s.tariff.tl_per_kwh[period])} TL/kWh`;
-  phase.className = `phase ${period === "puant" ? "ochre" : period === "gece" ? "water" : ""}`;
-  $("dock-title").textContent = "Şebekeye giren su, m³/sa";
-  $("dock-legend").innerHTML = `<i class="sw off"></i>Kapalı <i class="sw on"></i>Akıllı depo <i class="sw pilot"></i>+ Pilot`;
   const S = s.scenarios;
+  const solar = sc === "solar" && s.solar;
+  if (solar) {
+    const price = s.solar.price_tl_mwh[h];
+    const [a, b] = s.solar.hours;
+    phase.textContent = `Piyasa fiyatı ${fmt0.format(price)} TL/MWh`;
+    phase.className = `phase ${h >= a && h < b ? "ochre" : ""}`;
+  } else {
+    phase.textContent = `${TARIFF[period]} tarifesi, ${fmt2.format(s.tariff.tl_per_kwh[period])} TL/kWh`;
+    phase.className = `phase ${period === "puant" ? "ochre" : period === "gece" ? "water" : ""}`;
+  }
+  $("dock-title").textContent = "Şebekeye giren su, m³/sa";
+  $("dock-legend").innerHTML = `<i class="sw off"></i>Kapalı <i class="sw on"></i>Akıllı depo <i class="sw pilot"></i>+ Pilot${S.solar ? ` <i class="sw solar"></i>Güneş` : ""}`;
   chart = lineChart($("dock-svg"), {
-    series: ["off", "on", "pilot"].filter((k) => S[k]).map((k) => ({
+    series: ["off", "on", "pilot", "solar"].filter((k) => S[k] && (k !== "solar" || sc === "solar") && (k !== "pilot" || sc !== "solar")).map((k) => ({
       values: S[k].hourly.inflow_m3h, cls: k, main: k === sc, area: k === sc,
     })),
-    bands: groupBands(s.tariff.period.map((p) => (p === "gunduz" ? false : p)), (p) => p, (p) => TARIFF[p]),
+    bands: solar ? [{ from: s.solar.hours[0], to: s.solar.hours[1], cls: "sun", label: "Güneş saatleri" }]
+      : groupBands(s.tariff.period.map((p) => (p === "gunduz" ? false : p)), (p) => p, (p) => TARIFF[p]),
     cursor: h, cursorFmt: (v) => `${fmt0.format(v)} m³/sa`,
   });
 }

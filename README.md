@@ -3,7 +3,7 @@
 **Canlı dijital ikiz:** https://kamsechq.github.io/sanal-baraj/ · Takım **AQUAİST** · Water AI Hackathon 2026 (Wilo Türkiye)
 
 > Tarayıcıda açılır, kurulum gerekmez. Üstteki sekmeler: normal gün, kesinti günü, deprem günü, sızıntı avı,
-> İstanbul öncelik haritası. **Sunum** düğmesi (ya da `S`) 14 adımlık anlatımı başlatır.
+> İstanbul öncelik haritası. **Sunum** düğmesi (ya da `S`) 15 adımlık anlatımı başlatır.
 
 İlçe adını ver; OpenStreetMap'ten bir su şebekesi üretsin, bina depolarını ve hidroforları eklesin, normal bir
 günü üç senaryoyla, planlı kesinti gününü ve deprem gününü ikişer senaryoyla simüle etsin, gece bir sızıntının
@@ -33,13 +33,13 @@ Derleme adımı yok; bütün bağımlılıklar `web/vendor/` içinde, internetsi
 
 | Görünüm (kısayol) | Ne gösterir |
 |---|---|
-| Normal gün (`N`) | Üç senaryo; bina renkleri depo doluluğu, borular debi, düğümler basınç. Solda sanal baraj göstergesi, saatlik göstergeler, gün akışı, günün hesabı |
+| Normal gün (`N`) | Dört senaryo (kapalı, akıllı depo, + basınç pilotu, güneşle dolum); bina renkleri depo doluluğu, borular debi, düğümler basınç. Solda sanal baraj göstergesi, saatlik göstergeler, gün akışı, günün hesabı |
 | Kesinti günü (`K`) | Planlı kesinti ve su dönüşü; şamandıra ile orkestratör |
 | Deprem günü (`D`) | İBB 2019 senaryosunun boru hasarı; şamandıranın şüpheli suyu çekmesi ile kitin depoyu mühürlemesi, mahalle başına temiz su haritası |
 | Sızıntı avı (`L`) | Gece sızıntısının olası yerleri, %90 güven alanı, gerçek yer; sayaç, 5 kaydedici ve akıllı kit karşılaştırması |
 | Nereden başlamalı (`I`) | İstanbul'un 39 ilçesi: öncelik, su sorunu, uygunluk, susuzluk şikâyeti; ilçe ayrıntısı |
 
-- **Sunum modu (`S`):** jüriye 14 adımlık anlatım; her adım haritayı, senaryoyu ve saati kurar, rakamları o
+- **Sunum modu (`S`):** jüriye 15 adımlık anlatım; her adım haritayı, senaryoyu ve saati kurar, rakamları o
   ilçenin simülasyonundan alır. Sunum kumandası (PageDown/PageUp) ve ok tuşlarıyla ilerler. Metinler `web/js/story.js`.
 - **Karşılaştırma (`B` basılı):** aynı an yapay zekâ kapalıyken nasıldı.
 - Haritada bir öğeye tıklayınca sağda 24 saatlik eğrisi açılır (bina deposu, düğüm basıncı, boru debisi, DMA girişi, vana;
@@ -153,6 +153,32 @@ Duyarlılık: `.venv/bin/python scripts/deprem_duyarlilik.py Bayrampaşa` hasar 
 kaynatma uyarısının kapsamını ve DMA giriş kotunu değiştirir (`data/<bölge>/deprem_duyarlilik.csv`). Kitin temiz su
 kazancı her varyantta korunur; susuz kişi iki modda aynıdır ve hasarın yerine çok bağlıdır.
 
+## Güneşle dolum
+
+Normal günün dördüncü senaryosu (`4`): orkestratör üç zamanlı tarife yerine elektrik piyasasının saatlik gün öncesi
+fiyatına bakar (EPİAŞ GÖP; fiyat bir gün önceden yayımlanır). Öğlen güneş elektriği bolken fiyat sıfıra yaklaşıyor,
+depolar o saatlerde dolar. Arayüzdeki gün 26.10.2025; `scripts/gunes_dolum.py` beş gerçek günü dener.
+
+| Gün (Bayrampaşa) | Öğle fiyatı, TL/MWh | Piyasa maliyeti, güneş odaklı | Bugünkü tarifeyle |
+|---|---|---|---|
+| 11.05.2025, bahar | 112 | −%25,9 | +%8,7 |
+| 26.10.2025, sonbahar | 44 | −%15,8 | +%3,9 |
+| 14.12.2025, kış | 1.597 | −%7,0 | −%4,4 |
+| 25.08.2026, yaz | 2.375 | −%2,3 | −%0,1 |
+| 17.07.2025, sıcak yaz | 3.103 | −%0,1 | 0 |
+
+Kapalıya göre; beş günün ortalaması −%8. Bedeli: fiyat ağırlığı 1,0 iken tepe debisi düşmüyor (0,3 ile tepe de
+düşer, maliyet daha az iner).
+
+## Basınçtan enerji
+
+`twin/energy.py`: su depoya şebeke basıncıyla gelir (Bayrampaşa'da ortalama ~35 m), vana bu basıncı yok eder, sonra
+hidrofor suyu yeniden basar. Bayrampaşa'da depo girişlerinde günde ~2.500 kWh hidrolik enerji boşa gidiyor;
+hidroforlar ~4.250 kWh elektrik harcıyor. Girişe mikro türbin (verim %40, tahmin) konursa depolu binaların ~%31
+kadarında kit (ortalama 3 W, tahmin) kendi enerjisini üretir. Şebeke basıncının yettiği alt katları doğrudan
+beslemek hidrofor enerjisini çok azaltır ama o talep sanal barajdan çıkıp şebekenin tepe saatine döner; önerilmiyor.
+Bina incelemesinde her binanın enerji bütçesi görünür. Basınç pilotunun vanalarındaki enerji: `scripts/vana_turbin.py`.
+
 ## Modüller
 
 | Modül | Ne yapıyor |
@@ -166,6 +192,7 @@ kazancı her varyantta korunur; susuz kişi iki modda aynıdır ve hasarın yeri
 | `twin/pressure.py` | Basınç pilotu: aday alt bölgeler, kazanç tahmini, seçim, uygulama. |
 | `twin/outage.py` | Kesinti günü, saat saat PDD simülasyonu. |
 | `twin/leak.py` | Sızıntı avı: aday imzaları, gürültü, en büyük olabilirlik, üç sensör düzeni. |
+| `twin/energy.py` | Basınçtan enerji: depo girişinde boşa giden basınç, mikro türbin, doğrudan besleme. |
 | `twin/quake.py` | Deprem günü: İBB mahalle hasarını borulara dağıtma, kırık ve sızıntı açıklıkları, saat saat PDD, kit mühürü, temiz su. |
 | `twin/scenario.py` | Senaryoyu modele uygular, simüle eder, göstergeleri hesaplar. |
 | `twin/pipeline.py` | Bütün senaryoları sırayla kurar ve çalıştırır. |

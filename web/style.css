@@ -25,6 +25,8 @@
   --good-soft: rgba(92, 209, 158, 0.13);
   --bad: #FF7B68;
   --off: #8EA1A8;
+  --sun: #E9D25B;
+  --sun-soft: rgba(233, 210, 91, 0.13);
   --dam-wall: #586A70;
   --shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
   --ctrl-filter: invert(1) hue-rotate(180deg) brightness(1.2);
@@ -54,6 +56,8 @@
   --good-soft: rgba(23, 132, 90, 0.1);
   --bad: #C93A27;
   --off: #6B7D85;
+  --sun: #8A6D00;
+  --sun-soft: rgba(138, 109, 0, 0.1);
   --dam-wall: #A7B4B9;
   --shadow: 0 10px 34px rgba(14, 36, 48, 0.16);
   --ctrl-filter: none;
@@ -180,6 +184,8 @@ body.peek .hint { color: var(--ochre); }
 .scen-opt.pilot[aria-checked="true"] { border-color: var(--ochre); background: var(--ochre-soft); }
 .scen-opt.on[aria-checked="true"] .scen-key { border-color: var(--water); color: var(--water); }
 .scen-opt.pilot[aria-checked="true"] .scen-key { border-color: var(--ochre); color: var(--ochre); }
+.scen-opt.solar[aria-checked="true"] { border-color: var(--sun); background: var(--sun-soft); }
+.scen-opt.solar[aria-checked="true"] .scen-key { border-color: var(--sun); color: var(--sun); }
 
 /* Sanal baraj: kimliğin taşıyıcısı */
 .reservoir {
@@ -343,6 +349,7 @@ svg.insp-chart { width: 100%; height: 9rem; display: block; }
 .sw.off { background: var(--off); }
 .sw.on { background: var(--water); }
 .sw.pilot { background: var(--ochre); }
+.sw.solar { background: var(--sun); }
 .sw.cut { background: var(--alarm); opacity: 0.45; height: 0.6rem; }
 .sw.ref { background: none; border-top: 1px dashed var(--ink-3); height: 0; }
 
@@ -350,9 +357,11 @@ svg.insp-chart { width: 100%; height: 9rem; display: block; }
 svg .band { opacity: 1; }
 svg .band.gece, svg .band.night { fill: var(--water); opacity: 0.08; }
 svg .band.puant { fill: var(--ochre); opacity: 0.13; }
+svg .band.sun { fill: var(--sun); opacity: 0.12; }
 svg .band.cut { fill: var(--alarm); opacity: 0.13; }
 svg .band-label { font: 600 0.64rem var(--f-body); fill: var(--ink-3); }
 svg .band-label.puant { fill: var(--ochre); }
+svg .band-label.sun { fill: var(--sun); }
 svg .band-label.cut { fill: var(--alarm); }
 svg .grid { stroke: var(--line); stroke-width: 1; }
 svg .axis { font: 400 0.66rem var(--f-body); fill: var(--ink-3); }
@@ -361,10 +370,12 @@ svg .line.main { stroke-width: 2.4; opacity: 1; }
 svg .line.off { stroke: var(--off); }
 svg .line.on { stroke: var(--water); }
 svg .line.pilot { stroke: var(--ochre); }
+svg .line.solar { stroke: var(--sun); }
 svg .area { opacity: 0.15; stroke: none; }
 svg .area.off { fill: var(--off); }
 svg .area.on { fill: var(--water); }
 svg .area.pilot { fill: var(--ochre); }
+svg .area.solar { fill: var(--sun); }
 svg .ref { stroke: var(--ink-3); stroke-dasharray: 3 3; stroke-width: 1; }
 svg .ref.alarm { stroke: var(--alarm); opacity: 0.8; }
 svg .ref.reserve { stroke: var(--ink-2); }
@@ -375,6 +386,7 @@ svg .dot { stroke: var(--surface-solid); stroke-width: 1.5; }
 svg .dot.off { fill: var(--off); }
 svg .dot.on { fill: var(--water); }
 svg .dot.pilot { fill: var(--ochre); }
+svg .dot.solar { fill: var(--sun); }
 svg .cursor-label { font: 700 0.8rem var(--f-display); fill: var(--ink); paint-order: stroke; stroke: var(--surface-solid); stroke-width: 4px; stroke-linejoin: round; }
 
 /* --- Lejant -------------------------------------------------------------------- */

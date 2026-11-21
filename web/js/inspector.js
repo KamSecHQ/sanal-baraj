@@ -9,7 +9,7 @@ import * as leak from "./leak.js";
 let D = null;
 export function setData(d) { D = d; }
 
-const SC_LABEL = { off: "Kapalı", on: "Akıllı depo", pilot: "+ Pilot" };
+const SC_LABEL = { off: "Kapalı", on: "Akıllı depo", pilot: "+ Pilot", solar: "Güneş" };
 const OUT_LABEL = { off: "Şamandıra", on: "Orkestratör" };
 const QUAKE_LABEL = { off: "Şamandıra", on: "Akıllı kit" };
 const row = (k, v) => `<dt>${k}</dt><dd>${v}</dd>`;
@@ -68,6 +68,12 @@ function content(sel) {
       return { body: head("Bina", `${fmt0.format(p.fl)} katlı bina`, `DMA-${String(p.dma).padStart(2, "0")}`) + `<dl class="facts">${facts}</dl><p class="small">${note}</p>` };
     }
     facts += row("Depo", `${fmt1.format(p.tv)} m³, ${p.sm ? "akıllı kit" : "şamandıra"}`) + row("Hidrofor basma", `${fmt0.format(p.hb)} m`);
+    const en = s.energy;
+    if (en && p.ew !== undefined) {
+      facts += row("Girişte boşa giden basınç", `${fmt1.format(p.ew)} W, gün ortalaması`) +
+        row("Mikro türbinle", `${fmt1.format(p.et)} W (kit ${fmt0.format(en.kit_w)} W ister)`) +
+        row("Şebeke basıncının yettiği kat", `${fmt0.format(p.nd)} / ${fmt0.format(p.fl)}`);
+    }
     let chart, leg;
     if (out && has(p, "ol")) {
       chart = { series: [{ values: series(p, "ol"), cls: "off", main: sc === "off" }, { values: series(p, "oal"), cls: "on", main: sc === "on" }],
@@ -76,9 +82,10 @@ function content(sel) {
       leg = [["off", OUT_LABEL.off], ["on", OUT_LABEL.on]];
     } else {
       const on = has(p, "l") ? series(p, "l") : Array(24).fill(100);
-      chart = { series: [{ values: Array(24).fill(100), cls: "off", main: sc === "off" }, { values: on, cls: "on", main: sc !== "off", area: sc !== "off" }],
+      const sol = sc === "solar" && has(p, "ls") ? [{ values: series(p, "ls"), cls: "solar", main: true, area: true }] : [];
+      chart = { series: [{ values: Array(24).fill(100), cls: "off", main: sc === "off" }, { values: on, cls: "on", main: sc !== "off" && !sol.length, area: sc !== "off" && !sol.length }, ...sol],
         yMax: 100, yTicks: [0, 40, 100], yFmt: (v) => `%${v}`, refs: [{ y: 40, cls: "reserve", label: "yedek" }], cursorFmt: (v) => `%${fmt0.format(v)}` };
-      leg = [["off", "Şamandıra"], ["on", "Akıllı depo"]];
+      leg = [["off", "Şamandıra"], ["on", "Akıllı depo"], ...(sol.length ? [["solar", "Güneş"]] : [])];
     }
     const now = chart.series.find((x) => x.main).values[h];
     return {
@@ -98,10 +105,10 @@ function content(sel) {
       leg = [["off", OUT_LABEL.off], ["on", OUT_LABEL.on]];
       now = p[`${sc === "on" ? "oa" : "o"}${h}`];
     } else {
-      chart = { series: [["off", "p"], ["on", "pa"], ["pilot", "pb"]].filter(([, x]) => has(p, x)).map(([k, x]) => ({ values: series(p, x), cls: k, main: k === sc })),
+      chart = { series: [["off", "p"], ["on", "pa"], ["pilot", "pb"], ["solar", "ps"]].filter(([, x]) => has(p, x)).map(([k, x]) => ({ values: series(p, x), cls: k, main: k === sc })),
         refs: [{ y: min, cls: "alarm", label: `${min} m` }], cursorFmt: (v) => `${fmt1.format(v)} m` };
-      leg = [["off", SC_LABEL.off], ["on", SC_LABEL.on], ["pilot", SC_LABEL.pilot]];
-      now = p[`${{ off: "p", on: "pa", pilot: "pb" }[sc]}${h}`];
+      leg = [["off", SC_LABEL.off], ["on", SC_LABEL.on], ["pilot", SC_LABEL.pilot], ["solar", SC_LABEL.solar]];
+      now = p[`${{ off: "p", on: "pa", pilot: "pb", solar: "ps" }[sc]}${h}`];
     }
     return {
       body: head("Düğüm basıncı", `${fmt1.format(now)} m`, `Düğüm ${esc(p.id)}, DMA-${String(p.dma).padStart(2, "0")}, ${hh(h)}`) +
@@ -116,12 +123,12 @@ function content(sel) {
     const facts = row("Çap", `Ø${p.d} mm`) + row("Uzunluk", `${fmt0.format(p.L)} m`) + row("Gün içi en yüksek hız", `${fmt2.format(p.v)} m/s`) +
       row("Yol sınıfı", esc(p.hw)) + (p.b ? row("Durum", "DMA sınırı, kapalı vana") : p.bp ? row("Basınç pilotu", "alt bölge sınırı, pilotta kapalı") : "");
     if (p.b) return { body: head("Boru", `Ø${p.d} mm sınır borusu`) + `<dl class="facts">${facts}</dl>` };
-    const chart = { series: [["off", "q"], ["on", "qa"], ["pilot", "qb"]].filter(([, x]) => has(p, x)).map(([k, x]) => ({ values: series(p, x), cls: k, main: k === sc && !out })),
+    const chart = { series: [["off", "q"], ["on", "qa"], ["pilot", "qb"], ["solar", "qs"]].filter(([, x]) => has(p, x)).map(([k, x]) => ({ values: series(p, x), cls: k, main: k === sc && !out })),
       cursorFmt: (v) => `${fmt1.format(v)} L/s`, yFmt: (v) => fmt1.format(v) };
-    const now = p[`${{ off: "q", on: "qa", pilot: "qb" }[out ? "off" : sc]}${h}`];
+    const now = p[`${{ off: "q", on: "qa", pilot: "qb", solar: "qs" }[out ? "off" : sc]}${h}`];
     return {
       body: head("Boru debisi", `${fmt1.format(now)} L/s`, `Boru ${esc(p.id)}, Ø${p.d} mm, ${hh(h)}${out ? ", normal gün" : ""}`) +
-        `<div class="insp-chart-head">Debi, L/s ${legend([["off", SC_LABEL.off], ["on", SC_LABEL.on], ["pilot", SC_LABEL.pilot]])}</div><svg class="insp-chart"></svg><dl class="facts">${facts}</dl>`,
+        `<div class="insp-chart-head">Debi, L/s ${legend([["off", SC_LABEL.off], ["on", SC_LABEL.on], ["pilot", SC_LABEL.pilot], ["solar", SC_LABEL.solar]])}</div><svg class="insp-chart"></svg><dl class="facts">${facts}</dl>`,
       chart,
     };
   }
@@ -136,9 +143,9 @@ function content(sel) {
         bands: [{ from: s.outage.start, to: s.outage.end, cls: "cut" }], cursorFmt: (v) => `${fmt0.format(v)} m³/sa` };
       leg = [["off", OUT_LABEL.off], ["on", OUT_LABEL.on]];
     } else {
-      chart = { series: ["off", "on", "pilot"].filter((k) => r[k]).map((k) => ({ values: r[k].inflow_m3h, cls: k, main: k === (out ? "off" : sc), area: k === (out ? "off" : sc) })),
+      chart = { series: ["off", "on", "pilot", "solar"].filter((k) => r[k]).map((k) => ({ values: r[k].inflow_m3h, cls: k, main: k === (out ? "off" : sc), area: k === (out ? "off" : sc) })),
         cursorFmt: (v) => `${fmt0.format(v)} m³/sa` };
-      leg = [["off", SC_LABEL.off], ["on", SC_LABEL.on], ["pilot", SC_LABEL.pilot]];
+      leg = [["off", SC_LABEL.off], ["on", SC_LABEL.on], ["pilot", SC_LABEL.pilot], ["solar", SC_LABEL.solar]];
     }
     const k = r[out ? "off" : sc] ? (out ? "off" : sc) : "off";
     const bld = D.buildings.features.filter((b) => b.properties.dma === r.id);
@@ -318,14 +325,14 @@ export function tooltip(hit) {
       if (!(p.tv > 0)) return `${p.fl} katlı bina · deposuz`;
       let l = 100;
       if (out && p[`ol${h}`] !== undefined) l = p[`${sc === "on" ? "oal" : "ol"}${h}`];
-      else if (!out && sc !== "off" && p[`l${h}`] !== undefined) l = p[`l${h}`];
+      else if (!out && sc !== "off" && p[`${sc === "solar" ? "ls" : "l"}${h}`] !== undefined) l = p[`${sc === "solar" ? "ls" : "l"}${h}`];
       return `${p.fl} katlı bina · depo %${fmt0.format(l)}`;
     }
     case "node": {
-      const v = out ? p[`${sc === "on" ? "oa" : "o"}${h}`] : p[`${{ off: "p", on: "pa", pilot: "pb" }[sc]}${h}`];
+      const v = out ? p[`${sc === "on" ? "oa" : "o"}${h}`] : p[`${{ off: "p", on: "pa", pilot: "pb", solar: "ps" }[sc]}${h}`];
       return v === undefined ? `Düğüm ${p.id}` : `Düğüm · ${fmt1.format(v)} m basınç`;
     }
-    case "pipe": return p.b ? `Ø${p.d} sınır borusu · kapalı` : `Ø${p.d} boru · ${fmt1.format(p[`${{ off: "q", on: "qa", pilot: "qb" }[out ? "off" : sc]}${h}`])} L/s`;
+    case "pipe": return p.b ? `Ø${p.d} sınır borusu · kapalı` : `Ø${p.d} boru · ${fmt1.format(p[`${{ off: "q", on: "qa", pilot: "qb", solar: "qs" }[out ? "off" : sc]}${h}`])} L/s`;
     case "prv": return p.net !== undefined ? `Vana ${p.rank}. sıra · net ${fmt0.format(p.net)} TL/gün` : `Vana ${p.rank}. sıra · ${fmt1.format(p.save)} m³/gün kazanç`;
     case "inlet": return `${p.name} girişi`;
     case "dma": return `${p.name} · ${fmt0.format(p.n)} düğüm`;

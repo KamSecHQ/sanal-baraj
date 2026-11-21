@@ -293,8 +293,9 @@ function buildingColor(P, mode, sc, h) {
   }
   if (mode === "leak") return ["case", [">", ["get", "tv"], 0], P.bDim, P.bDim];
   if (sc === "off") return ["case", [">", ["get", "tv"], 0], P.bFull, P.bNone];
+  const lk = `${sc === "solar" ? "ls" : "l"}${h}`;
   return ["case",
-    ["has", `l${h}`], ["interpolate", ["linear"], ["get", `l${h}`], 40, P.bLow, 70, P.bMid, 100, P.bHigh],
+    ["has", lk], ["interpolate", ["linear"], ["get", lk], 40, P.bLow, 70, P.bMid, 100, P.bHigh],
     [">", ["get", "tv"], 0], P.bFull, P.bNone];
 }
 
@@ -350,7 +351,7 @@ export function update() {
     map.setPaintProperty("sb-pipes", "line-opacity", 0.7);
     updateLeak(P);
   } else {
-    const pre = { off: ["p", "q"], on: ["pa", "qa"], pilot: ["pb", "qb"] }[sc];
+    const pre = { off: ["p", "q"], on: ["pa", "qa"], pilot: ["pb", "qb"], solar: ["ps", "qs"] }[sc] || ["pa", "qa"];
     map.setPaintProperty("sb-nodes", "circle-color", ["step", ["get", `${pre[0]}${h}`], ...P.pressure]);
     map.setPaintProperty("sb-nodes", "circle-opacity", ["interpolate", ["linear"], ["zoom"], 12, 0.55, 15, 1]);
     const f = P.pipeFlow;

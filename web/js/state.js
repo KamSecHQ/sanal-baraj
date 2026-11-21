@@ -1,6 +1,6 @@
 // Uygulama durumu: tek nesne, değişince abonelere haber verir; URL ile eşlenir (sunumda yer imi olarak kullanılabilir).
 export const MODES = ["normal", "outage", "quake", "leak", "istanbul"];
-export const SC_KEYS = { normal: ["off", "on", "pilot"], outage: ["off", "on"], quake: ["off", "on"], leak: ["off", "on"], istanbul: [] };
+export const SC_KEYS = { normal: ["off", "on", "pilot", "solar"], outage: ["off", "on"], quake: ["off", "on"], leak: ["off", "on"], istanbul: [] };
 
 export const state = {
   slug: null,

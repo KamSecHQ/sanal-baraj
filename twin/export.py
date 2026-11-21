@@ -1,7 +1,9 @@
 """Simülasyon sonuçlarını harita arayüzünün okuduğu GeoJSON/JSON dosyalarına ve EPANET INP'ye yazar.
 
 Normal gün senaryoları aynı dosyalarda tutulur: düğümlerde p{h} (kapalı), pa{h} (akıllı depo), pb{h}
-(basınç pilotu) basınç; borularda q{h}, qa{h}, qb{h} debi; akıllı depolu binalarda l{h} doluluk.
+(basınç pilotu), ps{h} (güneşle dolum) basınç; borularda q{h}, qa{h}, qb{h}, qs{h} debi; akıllı depolu binalarda
+l{h} ve ls{h} (güneşle dolum) doluluk; depolu binalarda ew/et (girişte boşa giden ve türbinle geri kazanılabilecek
+güç, W) ve nd (şebeke basıncının yettiği kat).
 Kesinti günü yalnız seçilen DMA'nın öğelerinde: düğümlerde o{h}/oa{h} basınç, binalarda ol{h}/oal{h} doluluk.
 Sızıntı avı ayrı bir dosyada (leak.json): DMA düğümleri, sensör düzenleri, her olay için aday olasılıkları.
 Deprem günü bütün ilçede: düğümlerde e{h}/ea{h} basınç (şamandıra / kit), binalarda ar (alan sırası), ek/eka
@@ -28,11 +30,11 @@ from .scenario import activate
 
 HOURS = 24   # harita saatlik gösterir; ince adımlı sonuçlar saatlik özetlenir
 _TR = str.maketrans("çğıöşüÇĞİÖŞÜ", "cgiosuCGIOSU")
-SCENARIO_KEYS = ("off", "on", "pilot")
+SCENARIO_KEYS = ("off", "on", "pilot", "solar")
 # Saatlik özette hangi seri nasıl indirgenir (varsayılan: ortalama)
 SERIES_REDUCE = {"p_min": "min", "p_max": "max", "low_nodes": "max", "stored_m3": "first", "stored_hours": "first"}
-PREFIX_P = {"off": "p", "on": "pa", "pilot": "pb"}
-PREFIX_Q = {"off": "q", "on": "qa", "pilot": "qb"}
+PREFIX_P = {"off": "p", "on": "pa", "pilot": "pb", "solar": "ps"}
+PREFIX_Q = {"off": "q", "on": "qa", "pilot": "qb", "solar": "qs"}
 OUTAGE_P = {"off": "o", "on": "oa"}
 OUTAGE_L = {"off": "ol", "on": "oal"}
 QUAKE_P = {"off": "e", "on": "ea"}
@@ -106,6 +108,7 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
     P = {k: hourly(P_full[k]) for k in keys}
     outage = cmp.outage if cmp.outage_dma else {}
     quake = getattr(cmp, "quake", None)
+    energy = getattr(cmp, "energy", None)
     o_col = {}
     if outage:
         o_col = {j: i for i, j in enumerate(next(iter(outage.values())).junctions)}
@@ -187,10 +190,12 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
     # Binalar
     b = cmp.buildings
     st = cmp.storage
-    fill = {}
-    if "on" in cmp.scenarios:
-        lv = cmp.scenarios["on"].plan.level[:, :T][:, ::max(1, T // HOURS)]   # saat başlarındaki doluluk
-        fill = {j: 100.0 * lv[i, :HOURS] / st.volume[i] for i, j in enumerate(st.junctions) if st.volume[i] > 0}
+    def fill_of(key):
+        if key not in cmp.scenarios:
+            return {}
+        lv = cmp.scenarios[key].plan.level[:, :T][:, ::max(1, T // HOURS)]   # saat başlarındaki doluluk
+        return {j: 100.0 * lv[i, :HOURS] / st.volume[i] for i, j in enumerate(st.junctions) if st.volume[i] > 0}
+    fill, fill_s = fill_of("on"), fill_of("solar")
     feats = []
     area_idx = {a: i for i, a in enumerate(quake.area_names)} if quake else {}
     for pos, (_, row) in enumerate(b.iterrows()):
@@ -200,6 +205,8 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
         j = row["junction"]
         if props["sm"] and j in fill:
             props.update({f"l{h}": int(round(fill[j][h])) for h in range(HOURS)})
+        if props["sm"] and j in fill_s:
+            props.update({f"ls{h}": int(round(fill_s[j][h])) for h in range(HOURS)})
         if props["tv"] > 0:
             for k, run in outage.items():
                 if j in run.node_fill:
@@ -209,6 +216,8 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
             for k, run in quake.runs.items():
                 if run.risk_hour[pos] >= 0:
                     props[QUAKE_RISK[k]] = int(run.risk_hour[pos])
+        if energy is not None and props["tv"] > 0:
+            props.update({"ew": _r(energy.inlet_w[pos]), "et": _r(energy.turbine_w[pos]), "nd": int(energy.direct_floors[pos])})
         feats.append({"type": "Feature", "geometry": _coords(row.geometry), "properties": props})
     _write_geojson(out_dir / "buildings.geojson", feats)
 
@@ -226,6 +235,9 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
             if "pilot" in keys:
                 row["pilot"] = _r(cmp.metrics["pilot"]["daily"][k], 3)
                 row["pct_pilot"] = _pct(cmp.metrics["pilot"]["daily"][k], a[k])
+            if "solar" in keys:
+                row["solar"] = _r(cmp.metrics["solar"]["daily"][k], 3)
+                row["pct_solar"] = _pct(cmp.metrics["solar"]["daily"][k], a[k])
             comparison[k] = row
     summary = {
         **meta,
@@ -264,6 +276,12 @@ def export(twin: Twin, cmp, out_dir: Path, meta: dict, utm_crs) -> dict:
         }
     if cmp.leak is not None:
         summary["leak"] = export_leak(twin, cmp.leak, summary, out_dir)
+    if "solar" in cmp.extra:
+        x = cmp.extra["solar"]
+        summary["solar"] = {**x, "ptf_tl": {k: _r(v) for k, v in x["ptf_tl"].items()},
+                            "solar_share": {k: _r(v, 4) for k, v in x["solar_share"].items()}}
+    if energy is not None:
+        summary["energy"] = {k: (_r(v, 3) if isinstance(v, float) else v) for k, v in energy.summary.items()}
     if quake:
         summary["quake"] = export_quake(twin, quake, b, hulls, summary, out_dir)
     (out_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")

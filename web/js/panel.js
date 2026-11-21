@@ -9,6 +9,7 @@ export const SCENARIOS = {
     { key: "off", label: "Yapay zekâ kapalı", desc: "Şamandıralı vana depoyu hep dolu tutar; herkes suyu aynı anda çeker." },
     { key: "on", label: "Akıllı depo", desc: "Orkestratör depoları ucuz ve sakin saatlerde doldurur; yedek hep %40 seviyesinin üstünde." },
     { key: "pilot", label: "Akıllı depo + basınç pilotu", desc: "Ek olarak en verimli basınç düşürücü vanalar alçak bölgelerdeki fazla basıncı atar." },
+    { key: "solar", label: "Güneşle dolum", desc: "Orkestratör tarife yerine saatlik elektrik piyasa fiyatına bakar; depolar öğlen güneş elektriği bolken dolar." },
   ],
   outage: [
     { key: "off", label: "Şamandıralı vana", desc: "Kesinti habersiz geçer; su dönünce bütün depolar aynı anda dolmaya çalışır." },
@@ -73,7 +74,17 @@ function normalShell() {
     <section class="p-sec"><h2 class="p-h">Bu saat <span id="p-hour" class="p-h-aside"></span></h2><div class="kpis" id="p-kpis"></div></section>
     <section class="p-sec"><h2 class="p-h">Gün akışı</h2><ol class="flow" id="p-flow"></ol></section>
     <section class="p-sec"><h2 class="p-h">Günün hesabı</h2><div class="ledger-wrap"><table class="ledger" id="p-ledger"></table></div></section>
+    ${energyNote()}
     <footer class="p-foot">${footNote()}</footer>`;
+}
+
+// Basınçtan enerji: depo girişinde boşa giden şebeke basıncı (twin/energy.py)
+function energyNote() {
+  const e = D.summary.energy;
+  if (!e) return "";
+  return `<section class="p-sec"><h2 class="p-h">Basınçtan enerji</h2>
+    <p class="small">Su depoya ortalama ${fmt1.format(e.inlet_p_mean)} m basınçla geliyor; vana bu basıncı yok ediyor: günde ${fmt0.format(e.inlet_kwh_d)} kWh. Hidroforlar suyu yeniden basmak için ${fmt0.format(e.booster_kwh_d)} kWh harcıyor.
+    Girişe mikro türbin konursa günde ${fmt0.format(e.turbine_kwh_d)} kWh elektrik; depolu binaların %${fmt0.format(100 * e.self_powered_share)} kadarında kit kendi enerjisini üretir.</p></section>`;
 }
 
 function outageShell() {
@@ -183,9 +194,15 @@ function updateHour() {
       sc === "off" ? "Şamandıra: hep dolu" : trend(H.stored_m3, h, false), H.stored_hours[h]);
     const min = s.min_service_pressure_m;
     const d = (cur, ref, judge) => (sc === "off" ? "" : delta(cur, ref, judge));
+    const sol = s.solar;
+    const cost = sc === "solar" && sol
+      ? kpi("Piyasa maliyeti", fmt0.format((H.pump_kw[h] * sol.price_tl_mwh[h]) / 1000), `TL/sa, fiyat ${fmt0.format(sol.price_tl_mwh[h])} TL/MWh`, "",
+        // Fiyat sıfıra yakınken birkaç liralık farkın yüzdesi yanıltır; o saatte değişim gösterilmez
+        sol.price_tl_mwh[h] < 200 ? "" : d(H.pump_kw[h] * sol.price_tl_mwh[h], R.pump_kw[h] * sol.price_tl_mwh[h]))
+      : kpi("Basma maliyeti", fmt0.format(H.pump_tl[h]), "TL/sa", "", d(H.pump_tl[h], R.pump_tl[h]));
     $("p-kpis").innerHTML =
       kpi("Şebekeye giren", fmt0.format(H.inflow_m3h[h]), "m³/sa", "", d(H.inflow_m3h[h], R.inflow_m3h[h], "neutral")) +
-      kpi("Basma maliyeti", fmt0.format(H.pump_tl[h]), "TL/sa", "", d(H.pump_tl[h], R.pump_tl[h])) +
+      cost +
       kpi("Kaçak", fmt0.format(H.leak_m3h[h]), `m³/sa, giriş payı %${fmt1.format((100 * H.leak_m3h[h]) / H.inflow_m3h[h])}`, "", d(H.leak_m3h[h], R.leak_m3h[h])) +
       kpi("Ortalama basınç", fmt1.format(H.p_mean[h]), "m", "", d(H.p_mean[h], R.p_mean[h])) +
       kpi("En düşük basınç", fmt1.format(H.p_min[h]), "m", H.p_min[h] < min ? "alarm" : "") +
@@ -253,7 +270,23 @@ function cell(v, p, f, lower = true, active = false) {
   return `<td class="${active ? "active" : ""}">${f(v)}${chip}</td>`;
 }
 
+function solarLedger() {
+  const s = D.summary;
+  const c = s.comparison, x = s.solar;
+  const rows = [
+    ["Piyasa maliyeti", "TL/gün", x.ptf_tl, (v) => fmt0.format(v), true],
+    ["Güneş saatlerinde pompalama", "%", x.solar_share, (v) => fmt1.format(100 * v), false],
+    ["Tepe debisi", "m³/sa", { off: c.peak_inflow_m3h.off, on: c.peak_inflow_m3h.on, solar: c.peak_inflow_m3h.solar }, (v) => fmt0.format(v), true],
+    ["Basma enerjisi", "kWh/gün", { off: c.pump_kwh.off, on: c.pump_kwh.on, solar: c.pump_kwh.solar }, (v) => fmt0.format(v), true],
+  ];
+  const head = `<thead><tr><th></th><th>Kapalı</th><th>Akıllı depo</th><th class="active">Güneş</th></tr></thead>`;
+  return head + "<tbody>" + rows.map(([label, unit, r, f, lower]) =>
+    `<tr><th scope="row">${label}<span>${unit}</span></th><td>${f(r.off)}</td>${cell(r.on, r.off ? change(r.on, r.off) : undefined, f, lower)}${cell(r.solar, r.off ? change(r.solar, r.off) : undefined, f, lower, true)}</tr>`).join("") +
+    "</tbody>" + `<caption class="small" style="caption-side:bottom;text-align:left;padding-top:0.5rem">Piyasa fiyatı: EPİAŞ Gün Öncesi Piyasası, ${esc(x.date)} (gerçek saatlik fiyat). Bugünkü tarifeyle optimize edilen akıllı depo bu günde ${fmt0.format(x.ptf_tl.on)} TL tutuyor.</caption>`;
+}
+
 function normalLedger(sc) {
+  if (sc === "solar" && D.summary.solar) return solarLedger();
   const c = D.summary.comparison;
   const rows = [
     ["Tepe debisi", "m³/sa", "peak_inflow_m3h", (v) => fmt0.format(v), true],

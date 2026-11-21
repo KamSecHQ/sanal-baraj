@@ -149,6 +149,17 @@ export function normalDay(s, sc) {
   const reserve = 100 * ((s.params && s.params.reserve_fraction) || 0.4);
   ev.push({ from: minH, to: minH + 1, title: "En düşük doluluk",
     text: `Sanal baraj %${fmt0.format(minF)}. Kural: hiçbir depo %${fmt0.format(reserve)} yedeğin altına inmez; kesinti ve deprem için su hep hazır.` });
+  if (sc === "solar" && s.solar) {
+    const x = s.solar;
+    const [a, b] = x.hours;
+    const prices = x.price_tl_mwh.slice(a, b);
+    const ix = ev.findIndex((e) => e.title === "Puant saatleri");
+    if (ix >= 0) ev.splice(ix, 1);
+    ev.push({ from: a, to: b, title: "Güneş saatleri", tone: "ochre",
+      text: `Elektrik piyasasında fiyat ${fmt0.format(Math.min(...prices))} TL/MWh seviyesine iniyor. Orkestratör depoları bu saatlerde dolduruyor: pompalamanın %${fmt1.format(100 * x.solar_share.solar)} kadarı burada (bugünkü tarifeyle %${fmt1.format(100 * x.solar_share.on)}).` });
+    ev.push({ from: 0, to: 0, title: "Gerçek fiyatla günün hesabı", tone: "water",
+      text: `Piyasa fiyatıyla basma maliyeti günde ${fmt0.format(x.ptf_tl.solar)} TL; bugünkü tarifeyle optimize edilen akıllı depoda ${fmt0.format(x.ptf_tl.on)} TL, kapalıyken ${fmt0.format(x.ptf_tl.off)} TL. Bedeli: bu modda tepe debisi düşmüyor.` });
+  }
   if (sc === "pilot" && c.leak_m3 && c.leak_m3.pilot !== undefined) {
     ev.push({ from: 0, to: 0, title: "Basınç pilotu", tone: "ochre",
       text: `${s.pilot.prvs} basınç düşürücü vana fazla basıncı atıyor: kaçak günde ${fmt0.format(c.leak_m3.off - c.leak_m3.pilot)} m³ az (${signedPct(c.leak_m3.pct_pilot)}).` });
