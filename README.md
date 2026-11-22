@@ -187,6 +187,23 @@ başlayan klasik depoyla %8, hava tahminine göre önceden boşaltılan akıllı
 13–14 Ekim 2026'da Eyüpsultan'a düşen 203,9 mm'de %2 ve %19. Yağmur suyu içme dışı işlerde yılda şebeke
 tüketiminin ~%9 kadarını karşılar (aylık ortalama yağışla, iyimser). Normal gün panelinde özet.
 
+## Altı ilçe
+
+Aynı yazılımla beş ilçe daha üretildi (`scripts/ilce_karsilastir.py`, `data/ilce-karsilastirma.json`). Her ilçe 4–11 dakika
+(OSM indirmesi dahil). Solda şamandıralı vana, sağda Sanal Baraj kiti:
+
+| İlçe | Bina | Kesinti dönüşü en düşük basınç | Susuz kişi-saat | Deprem: riskli depo | Deprem: temiz su, gün |
+|---|---|---|---|---|---|
+| Bayrampaşa | 17.358 | 5,2 → 18,1 m | 1.061 → 0 | 6.258 → 0 | 16,7 → 31,6 |
+| Fatih | 29.077 | 6,2 → 17,0 m | 784 → 0 | 6.922 → 0 | 27,4 → 38,7 |
+| Bağcılar | 23.468 | 4,1 → 16,4 m | 1.567 → 0 | 6.279 → 0 | 31,2 → 44,7 |
+| Esenler | 21.684 | 5,7 → 15,7 m | 181 → 0 | 2.784 → 0 | 40,3 → 46,2 |
+| Küçükçekmece | 25.202 | 11,7 → 18,0 m | 80 → 0 | 5.694 → 0 | 30,3 → 41,5 |
+| Avcılar | 19.381 | 9,4 → 16,7 m | 305 → 0 | 3.965 → 0 | 23,8 → 30,6 |
+
+Normal günde tepe altı ilçede de %28,4–28,5 düşüyor: bütün ilçelere aynı saatlik talep profili uygulanıyor, bu yüzden
+fark ilçeden değil profilden geliyor. İlçeye özgü fark kesinti ve deprem günlerinde.
+
 ## Modüller
 
 | Modül | Ne yapıyor |
