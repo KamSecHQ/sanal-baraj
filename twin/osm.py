@@ -34,6 +34,8 @@ def _overpass(fn, *args, rounds: int = 3, **kwargs):
     for attempt in range(rounds):
         for url in OVERPASS_MIRRORS:
             ox.settings.overpass_url = url
+            # Aynaların durum sayfası osmnx'in hız beklemesini sonsuza uzatabiliyor; beklemeyi yalnız ana sunucuda tut
+            ox.settings.overpass_rate_limit = url == OVERPASS_MIRRORS[0]
             try:
                 return fn(*args, **kwargs)
             except (requests.exceptions.ConnectionError, requests.exceptions.Timeout,

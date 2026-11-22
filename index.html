@@ -112,6 +112,17 @@ section.s { padding: clamp(72px, 10vw, 130px) 0 0; }
 @media (max-width: 900px) { .ideas { grid-template-columns: 1fr; } }
 
 /* kit */
+.tbl { margin-top: 36px; overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: var(--bg-2); }
+.tbl table { width: 100%; border-collapse: collapse; min-width: 760px; font-variant-numeric: tabular-nums; }
+.tbl th { text-align: right; font: 600 13px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl td { text-align: right; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--ink-2); }
+.tbl td b { color: var(--water); font-weight: 700; }
+.tbl tbody tr { cursor: pointer; transition: background .15s; }
+.tbl tbody tr:hover { background: rgba(66,185,221,.07); }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+.tbl td:first-child::after { content: " ↗"; color: var(--ink-3); font-weight: 400; }
 .kit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 44px; }
 @media (max-width: 900px) { .kit-grid { grid-template-columns: 1fr; } }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
@@ -147,7 +158,7 @@ footer a { color: var(--ink-2); }
   <div class="wrap">
     <a class="brand" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M20 5h5l3 22h-8z" fill="#586A70"/><path d="M3 27h17V12C14 12 8 19 3 27z" fill="#42B9DD"/><path d="M5 22c3-2 6-2 9 0s4 1.4 6 .6" stroke="#E8F1F3" stroke-width="1.6" fill="none"/></svg>Sanal Baraj</a>
     <nav class="nav-links" aria-label="Bölümler">
-      <a href="#video">Video</a><a href="#nasil">Nasıl çalışır</a><a href="#sonuc">Sonuçlar</a><a href="#fikir">Yeni fikirler</a><a href="#kit">Kit</a><a href="#takim">Takım</a>
+      <a href="#video">Video</a><a href="#nasil">Nasıl çalışır</a><a href="#sonuc">Sonuçlar</a><a href="#ilceler">İlçeler</a><a href="#fikir">Yeni fikirler</a><a href="#kit">Kit</a><a href="#takim">Takım</a>
     </nav>
     <a class="btn btn-p" href="web/?d=bayrampasa&amp;m=normal&amp;s=on&amp;h=8">Dijital ikizi aç</a>
   </div>
@@ -247,6 +258,19 @@ footer a { color: var(--ink-2); }
     </div>
   </section>
 
+  <section class="s" id="ilceler">
+    <div class="wrap">
+      <p class="eyebrow">Ölçek · altı ilçe</p>
+      <h2 class="reveal">Aynı yazılım altı ilçede; her biri dakikalar içinde dijital ikiz</h2>
+      <p class="lead reveal">Her ilçe OpenStreetMap ve İBB verisinden ek ayar olmadan üretildi. Satıra tıklayın, o ilçenin dijital ikizi açılsın.</p>
+      <div class="tbl reveal"><table id="ilce-tbl">
+        <thead><tr><th>İlçe</th><th>Bina</th><th>Kesinti dönüşü en düşük basınç</th><th>Susuz kişi-saat, dönüşte</th><th>Deprem: kirlenme riskinde depo</th><th>Deprem: temiz içme suyu, gün</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="small reveal" style="margin-top:14px">Solda bugün (şamandıralı vana), sağda Sanal Baraj kiti. Normal günde tepe altı ilçede de <span data-k="pkrange">−</span> düşüyor; çünkü modelde bütün ilçelere aynı saatlik talep profili uygulanıyor. İlçeye özgü fark kesinti ve deprem günlerinde.</p>
+    </div>
+  </section>
+
   <section class="s" id="fikir">
     <div class="wrap">
       <p class="eyebrow o">Yeni fikirler · doğanın enerjisiyle</p>
@@ -328,6 +352,19 @@ footer a { color: var(--ink-2); }
     set("turbine", f0.format(s.energy.turbine_kwh_d)); set("bld", f0.format(s.counts.buildings));
     const ev = s.rain.events[0];
     set("rain", "%" + f0.format(100 * ev.smart_share)); set("raintxt", ` ${f0.format(ev.mm)} mm sağanakta çatı suyunun tutulan payı (dolu klasik depo %${f0.format(100 * ev.passive_share)})`);
+    const R = await (await fetch("data/ilce-karsilastirma.json")).json();
+    const order = ["bayrampasa", "fatih", "bagcilar", "esenler", "kucukcekmece", "avcilar"];
+    const rank = x => { const i = order.indexOf(x.slug); return i < 0 ? 99 : i; };
+    R.sort((a, b) => rank(a) - rank(b));
+    const tb = document.querySelector("#ilce-tbl tbody");
+    for (const x of R) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${x.name}</td><td>${f0.format(x.buildings)}</td><td>${f1.format(x.out_p_off)} → <b>${f1.format(x.out_p_on)} m</b></td><td>${f0.format(x.out_dry_off)} → <b>${f0.format(x.out_dry_on)}</b></td><td>${f0.format(x.quake_risk_off)} → <b>${f0.format(x.quake_risk_on)}</b></td><td>${f1.format(x.quake_days_off)} → <b>${f1.format(x.quake_days_on)}</b></td>`;
+      tr.addEventListener("click", () => { location.href = `web/?d=${x.slug}&m=normal&s=on&h=8`; });
+      tb.appendChild(tr);
+    }
+    const pk = R.map(x => -x.peak_pct);
+    set("pkrange", "%" + f1.format(Math.min(...pk)) + "–" + f1.format(Math.max(...pk)));
   } catch (e) { console.warn("Özet okunamadı", e); }
 })();
 // Kaydırınca beliren bölümler
